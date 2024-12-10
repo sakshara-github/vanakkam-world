@@ -1,0 +1,70 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = 'sudhakshara/my-webapp'  // Replace with your Docker image name
+        DOCKER_REGISTRY = 'docker-hub'  
+        DOCKER_USERNAME='sudhakshara'          // Docker registry URL
+        KUBECONFIG = '/home/sakshara479/jenkins/kubeconfig'      
+                        
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Checkout the code from the repository
+                git 'https://your-repository-url.git'   // Replace with your Git repository URL
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    // Build the Docker image from Dockerfile
+                    docker.build("${DOCKER_IMAGE}:${IMAGE_TAG}", "-f Dockerfile .")
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    // Push the Docker image to Docker registry
+                    docker.withRegistry("https://${DOCKER_REGISTRY}", 'docker-credentials') {
+                        docker.image("${DOCKER_IMAGE}:${IMAGE_TAG}").push()
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    // Deploy the Docker image to Kubernetes using the kubernetes.yaml file
+                    // Set the image to the newly built one in the YAML file
+                    sh "sed -i 's|image: .*|image: ${DOCKER_IMAGE}:${IMAGE_TAG}|' ${K8S_DEPLOYMENT_YAML}"
+
+                    // Apply the Kubernetes YAML to deploy
+                    sh "kubectl apply -f ${K8S_DEPLOYMENT_YAML}"
+                }
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                script {
+                    // Optionally, verify that the pod is running
+                    sh 'kubectl rollout status deployment tomcat-deployment'  // Replace with your deployment name
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Cleaning up after the pipeline'
+            // Optional: Clean up Docker images if needed
+            sh "docker rmi ${DOCKER_IMAGE}:${IMAGE_TAG}"
+        }
+    }
+}
