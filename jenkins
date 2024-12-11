@@ -6,7 +6,7 @@ pipeline {
         DOCKER_TAG:"latest"         
         DOCKER_USERNAME='sudhakshara'
         DOCKER_CREDENTIALS= 'dockerhub'
-        KUBECONFIG = '/home/sakshara479/jenkins/kubeconfig'      
+        KUBECONFIG = '/home/sudha_cubensquare/jenkins/kubeconfig'      
                         
     }
 
@@ -42,13 +42,14 @@ pipeline {
             steps {
                 script {
               
-                    sh "kubectl apply -f Tomcat.yaml"
+                    sh "kubectl apply -f tomcat.yaml"
                 }
             }
         }
-
-       
     }
+}       
+    
 
     
-}
+
+
