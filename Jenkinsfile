@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = "sudhakshara/my-webapp"
-        DOCKER_TAG = "latest"         // Corrected line
+        DOCKER_TAG = "latest"  // Corrected line
         DOCKER_USERNAME = 'sudhakshara'
         DOCKER_CREDENTIALS = 'dockerhub'
         KUBECONFIG = '/home/sudha_cubensquare/.kube/config'
@@ -13,7 +13,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 // Checkout the code from the repository
-                git branch: 'master', url: 'https://github.com/sakshara-github/vanakkam-world.git',   // Replace with your Git repository URL
+                git branch: 'master', url: 'https://github.com/sakshara-github/vanakkam-world.git'  // Replace with your Git repository URL
             }
         }
 
@@ -30,8 +30,8 @@ pipeline {
             steps {
                 script {
                     // Push the Docker image to Docker registry
-                    docker.withRegistry('https://index.docker.io/v1/', 'DOCKER_CREDENTIALS') {
-                        sh 'docker push ${DOCKER_IMAGE}:${DOCKER_TAG}'
+                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDENTIALS}") {
+                        sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
                     }
                 }
             }
@@ -47,9 +47,3 @@ pipeline {
         }
     }
 }
- 
-    
-
-    
-
-
