@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = 'sudhakshara/my-webapp'
-        DOCKER_TAG:"latest"         
+        DOCKER_TAG="latest"         
         DOCKER_USERNAME='sudhakshara'
         DOCKER_CREDENTIALS= 'dockerhub'
         KUBECONFIG = '/home/sudha_cubensquare/jenkins/kubeconfig'      
