@@ -13,7 +13,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 // Checkout the code from the repository
-                git branch: 'master', url: 'https://github.com/sakshara-github/vanakkam-world.git', branch:'main'  // Replace with your Git repository URL
+                git branch: 'master', url: 'https://github.com/sakshara-github/vanakkam-world.git',   // Replace with your Git repository URL
             }
         }
 
