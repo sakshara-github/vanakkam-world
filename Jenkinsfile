@@ -1,4 +1,5 @@
-pipeline {
+
+       pipeline {
     agent any
 
     environment {
@@ -19,9 +20,11 @@ pipeline {
         stage('Build WAR') {
             steps {
                 script {
-                    // Build the WAR file using Maven (or your build system)
-                    // Adjust the command if you're using Gradle or another build tool
-                    sh 'mvn clean package -DskipTests'
+                    // Use Maven Docker image to build the WAR file
+                    docker.image('maven:3.8.6-openjdk-11').inside {
+                        // Build the WAR file using Maven
+                        sh 'mvn clean package -DskipTests'
+                    }
                 }
             }
         }
