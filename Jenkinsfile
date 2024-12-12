@@ -1,69 +1,62 @@
-
-       pipeline {
+pipeline {
     agent any
-
     environment {
-        DOCKER_IMAGE_NAME = "sudhakshara/webapp"
+        // Set Docker Hub credentials (if using Docker Hub)
+        DOCKER_REGISTRY = "docker.io" // Example: "docker.io"
+        DOCKER_IMAGE = "sudhakshara/webapp"  // Example: "yourusername/yourapp"
         DOCKER_TAG = "latest"
-        DOCKER_CREDENTIALS = 'dockerhub'
-        KUBE_CONFIG = '/home/sudha_cubensquare/.kube/config'  
+        
+        // Jenkins credentials for Docker login
+        DOCKER_CREDENTIALS = 'dockerhub' // Jenkins credentials ID for Docker Hub login
     }
-
     stages {
-        stage('Checkout') {
-            steps {
-                // Checkout the latest code from the repository
-                git branch: 'master', url: 'https://github.com/sakshara-github/vanakkam-world.git'
-            }
-        }
-
-        stage('Build WAR') {
+        stage('Pull Docker Image') {
             steps {
                 script {
-                    
-                        sh 'mvn clean install'
-                           
-                    }
+                    // Pull the base Docker image (this may not be necessary as you are building your own image)
+                    sh 'docker pull tomcat:8-jre8'
                 }
             }
         }
-
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Build the Docker image
-                    sh "docker build -t ${DOCKER_IMAGE_NAME}:${DOCKER_TAG} ."
+                    // Build the custom Docker image
+                    sh 'docker build -t $DOCKER_REGISTRY/$DOCKER_IMAGE:$DOCKER_TAG .'
                 }
             }
         }
-
         stage('Push Docker Image') {
             steps {
                 script {
-                    // Login to Docker registry and push the image
-                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS) {
-                        sh 'docker push ${DOCKER_IMAGE_NAME}:${DOCKER_TAG}'
+                     docker.withRegistry('https://index.docker.io/v1/',  DOCKER_CREDENTIALS) {
+                        sh 'docker push ${DOCKER_IMAGE}:${DOCKER_TAG}'
                     }
+
+                   
                 }
             }
         }
-
-        stage('Deploy to Kubernetes') {
+        stage('Deploy Using YAML') {
             steps {
                 script {
-                    // Deploy the application using the Kubernetes YAML file
+                    // Assuming you're deploying to Kubernetes using kubectl and a deployment.yaml
+                    // If using Docker Compose, this step can be modified accordingly
                     sh 'kubectl apply -f tomcat.yaml'
                 }
             }
         }
     }
-
     post {
         success {
-            echo 'Pipeline completed successfully!'
+            echo 'Deployment finished successfully!'
         }
         failure {
-            echo 'Pipeline failed.'
+            echo 'Something went wrong during the deployment.'
         }
     }
 }
+
+   
+
+       
