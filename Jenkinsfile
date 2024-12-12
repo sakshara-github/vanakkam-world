@@ -6,14 +6,13 @@ pipeline {
         DOCKER_TAG = "latest"
         DOCKER_CREDENTIALS = 'dockerhub'
         KUBE_CONFIG = '/home/sudha_cubensquare/.kube/config'  
-        
     }
 
     stages {
         stage('Checkout') {
             steps {
                 // Checkout the latest code from the repository
-                 git branch: 'master', url: 'https://github.com/sakshara-github/vanakkam-world.git'
+                git branch: 'master', url: 'https://github.com/sakshara-github/vanakkam-world.git'
             }
         }
 
@@ -30,9 +29,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                  
-                       sh "docker build -t ${DOCKER_IMAGE_NAME}:${DOCKER_TAG} ."
-                    """
+                    // Build the Docker image
+                    sh "docker build -t ${DOCKER_IMAGE_NAME}:${DOCKER_TAG} ."
                 }
             }
         }
@@ -40,18 +38,17 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/',  DOCKER_CREDENTIALS) {
-                   
-                    sh 'docker push ${DOCKER_IMAGE_NAME}:${DOCKER_TAG}'
+                    // Login to Docker registry and push the image
+                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS) {
+                        sh 'docker push ${DOCKER_IMAGE_NAME}:${DOCKER_TAG}'
+                    }
                 }
             }
         }
-    }
 
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    
                     // Deploy the application using the Kubernetes YAML file
                     sh 'kubectl apply -f tomcat.yaml'
                 }
