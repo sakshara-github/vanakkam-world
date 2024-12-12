@@ -24,7 +24,7 @@
                     docker.image('maven:3.8.6-openjdk-11').inside {
                         // Build the WAR file using Maven
                         sh 'mvn clean package -DskipTests'
-                           sh 'ls -l target/'
+                           
                     }
                 }
             }
