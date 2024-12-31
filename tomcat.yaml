@@ -19,13 +19,7 @@ spec:
         image: tomcat:8-jre8
         ports:
         - containerPort: 9090
-        volumeMounts:
-        - name: webapp-volume
-          mountPath: /usr/local/tomcat/webapps
-        command: ["/bin/bash", "-c", "cp -R /usr/local/tomcat/webapps.dist/* /usr/local/tomcat/webapps && catalina.sh run"]
         
-      volumes:
-      - name: webapp-volume
         
 
 ---
@@ -38,6 +32,6 @@ spec:
     app: tomcat
   ports:
     - protocol: TCP
-      port: 8080
+      port: 9090
       targetPort: 8080
   type: NodePort
