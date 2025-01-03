@@ -15,8 +15,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 // Checkout the code from GitHub or another source
-                git branch: 'master', url: 'https://github.com/sakshara-github/Vanakkam-world.git'
-            }
+                git branch: 'master', url: 'https://github.com/sakshara-github/vanakkam-world.git'
         }
 
         stage('Build Docker Image') {
