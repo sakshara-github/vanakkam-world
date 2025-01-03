@@ -4,7 +4,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = "sudhakshara/vw-image"
         DOCKER_TAG = "latest"
-        KUBECONFIG = '/home/sakshara479/.kube/config' 
+        KUBECONFIG = '/home/sudha_cubensquare/.kube/config' 
         DOCKER_CREDENTIALS = 'dockerhub'
     }
      tools {
