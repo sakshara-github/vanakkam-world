@@ -37,7 +37,7 @@ pipeline {
                 script {
                     docker.withRegistry('https://index.docker.io/v1/',  DOCKER_CREDENTIALS) {
                         sh 'docker push ${DOCKER_IMAGE}:${DOCKER_TAG}'
-                        sh 'docker push ${DOCKER_IMAGE_SQL}:${DOCKER_TAG}'
+                        
                     }
                 }
             }
