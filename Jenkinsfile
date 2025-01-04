@@ -8,10 +8,7 @@ pipeline {
         DOCKER_CREDENTIALS = 'dockerhub'
     }
 
-    tools {
-        maven 'mymaven'
-    }
-
+   
     stages {
         stage('Checkout') {
             steps {
@@ -29,12 +26,7 @@ pipeline {
             }
         }
 
-        stage('Build with Maven') {
-            steps {
-                echo 'Building the project using Maven...'
-                sh 'mvn clean install'
-            }
-        }
+        
 
         stage('Push to Dockerhub') {
             steps {
