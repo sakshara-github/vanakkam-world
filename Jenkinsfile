@@ -2,14 +2,16 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = 'dockerhub'('dockerhub-credentials') // DockerHub credentials configured in Jenkins
+        DOCKERHUB_CREDENTIALS= dockerhub  // DockerHub username
         DOCKERHUB_REPO = 'sudhakshara/vw-image'
         DOCKER_IMAGE_TAG = 'latest'
-        KUBECONFIG = '/home/sudha_cubensquare/.kube/config'// Kubernetes kubeconfig credentials
+        KUBECONFIG = '/home/sudha_cubensquare/.kube/config' // Kubernetes kubeconfig credentials
     }
+
     tools {
-    maven 'mymaven'
+        maven 'mymaven'  // Ensure this tool is configured in Jenkins
     }
+
     stages {
         stage('Checkout Code') {
             steps {
@@ -47,11 +49,11 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 echo 'Deploying the application to Kubernetes...'
-              
-                        export KUBECONFIG=$KUBECONFIG
-                        kubectl apply -f tomcat.yaml
-                      
-                    '''
+                script {
+                    // Exporting Kubeconfig to deploy
+                    withEnv(["KUBECONFIG=$KUBECONFIG"]) {
+                        sh 'kubectl apply -f tomcat.yaml'
+                    }
                 }
             }
         }
@@ -66,5 +68,3 @@ pipeline {
         }
     }
 }
-}
-
