@@ -5,7 +5,7 @@ pipeline {
         DOCKERHUB_CREDENTIALS = 'dockerhub'('dockerhub-credentials') // DockerHub credentials configured in Jenkins
         DOCKERHUB_REPO = 'sudhakshara/vw-image'
         DOCKER_IMAGE_TAG = 'latest'
-        KUBECONFIG_CREDENTIALS = credentials('kubeconfig-credentials') // Kubernetes kubeconfig credentials
+        KUBECONFIG = '/home/sudha_cubensquare/.kube/config'// Kubernetes kubeconfig credentials
     }
     tools {
     maven 'mymaven'
@@ -47,8 +47,7 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 echo 'Deploying the application to Kubernetes...'
-                withCredentials([file(credentialsId: 'kubeconfig-credentials', variable: 'KUBECONFIG')]) {
-                    sh '''
+              
                         export KUBECONFIG=$KUBECONFIG
                         kubectl apply -f tomcat.yaml
                       
