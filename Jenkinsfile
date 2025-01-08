@@ -1,8 +1,11 @@
-pipeline {
+
+
+       
+   pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS= 'dockerhub'  // DockerHub username
+        DOCKERHUB_CREDENTIALS = 'dockerhub'  // DockerHub username
         DOCKERHUB_REPO = 'sudhakshara/vanakkam-image'
         DOCKER_IMAGE_TAG = 'latest'
         KUBECONFIG = '/home/sudha_cubensquare/.kube/config' // Kubernetes kubeconfig credentials
@@ -15,7 +18,7 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                 git branch: 'master', url: 'https://github.com/sakshara-github/vanakkam-world.git'
+                git branch: 'master', url: 'https://github.com/sakshara-github/vanakkam-world.git'
             }
         }
 
@@ -26,28 +29,29 @@ pipeline {
             }
         }
 
-       stage('Build flask Image') {
+        stage('Build the Image') {
             steps {
                 script {
                     // Build the Docker image
-                    sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                    sh "docker build -t ${DOCKERHUB_REPO}:${DOCKER_IMAGE_TAG} ."
+                }
             }
         }
 
         stage('Push to Dockerhub') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/',  DOCKER_CREDENTIALS) {
-                        sh 'docker push ${DOCKER_IMAGE}:${DOCKER_TAG}'
-                '''
+                    docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS) {
+                        sh "docker push ${DOCKERHUB_REPO}:${DOCKER_IMAGE_TAG}"
+                    }
+                }
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                        sh "kubectl apply -f tomcat.yaml"
-                    }
+                    sh "kubectl apply -f tomcat.yaml"
                 }
             }
         }
