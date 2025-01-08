@@ -26,32 +26,27 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+       stage('Build flask Image') {
             steps {
-                echo 'Building Docker image...'
-                sh '''
-                    docker build -t $DOCKERHUB_REPO:$DOCKER_IMAGE_TAG .
-                '''
+                script {
+                    // Build the Docker image
+                    sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
             }
         }
 
-        stage('Push Docker Image') {
+        stage('Push to Dockerhub') {
             steps {
-                echo 'Pushing Docker image to DockerHub...'
-                sh '''
-                    echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
-                    docker push $DOCKERHUB_REPO:$DOCKER_IMAGE_TAG
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/',  DOCKER_CREDENTIALS) {
+                        sh 'docker push ${DOCKER_IMAGE}:${DOCKER_TAG}'
                 '''
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                echo 'Deploying the application to Kubernetes...'
                 script {
-                    // Exporting Kubeconfig to deploy
-                    withEnv(["KUBECONFIG=$KUBECONFIG"]) {
-                        sh 'kubectl apply -f tomcat.yaml'
+                        sh "kubectl apply -f tomcat.yaml"
                     }
                 }
             }
