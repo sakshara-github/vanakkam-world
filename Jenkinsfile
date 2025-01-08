@@ -15,8 +15,7 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                echo 'Cloning the repository...'
-                git url: 'https://github.com/sudhakshara/vanakkam-world.git', branch: 'master'
+                 git branch: 'master', url: 'https://github.com/sakshara-github/vanakkam-world.git'
             }
         }
 
