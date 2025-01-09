@@ -1,37 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: tomcat-deployment
+  name: vanakkam-world
   labels:
-    app: tomcat
+    app: vanakkam-world
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
-      app: tomcat
+      app: vanakkam-world
   template:
     metadata:
       labels:
-        app: tomcat
+        app: vanakkam-world
     spec:
       containers:
-      - name: tomcat
-        image: tomcat:8-jre8
+      - name: vanakkam-world
+        image: sudhakshara/vanakkam-image
         ports:
-        - containerPort: 9090
-        
-        
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: tomcat-service
-spec:
-  selector:
-    app: tomcat
-  ports:
-    - protocol: TCP
-      port: 9090
-      targetPort: 8080
-  type: NodePort
+        - containerPort: 8080
