@@ -1,0 +1,10 @@
+version: '3.7'
+
+services:
+  tomcat:
+    build:
+      context: .  # Use the current directory as the build context
+      dockerfile: Dockerfile  # Name of the Dockerfile (optional if it's named "Dockerfile")
+    image: vanakkam-image:latest  # Optional: Name for your image
+    ports:
+      - "9091:8080"  # Expose port 8080 for accessing Tomcat
