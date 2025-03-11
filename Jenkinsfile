@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = 'dockerhub'  // DockerHub username
+        DOCKERHUB_CREDENTIALS = 'sudha-jenkins'  // DockerHub username
         DOCKERHUB_REPO = 'sudhakshara/vw-image'
         DOCKER_IMAGE_TAG = 'latest'
     }
