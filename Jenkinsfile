@@ -25,6 +25,15 @@ pipeline {
             }
         }
 
+        stage('Verify Docker Installation') {
+            steps {
+                script {
+                    // Verify Docker installation
+                    sh 'docker --version'
+                }
+            }
+        }
+
         stage('Build the Image') {
             steps {
                 script {
@@ -54,6 +63,3 @@ pipeline {
         }
     }
 }
-
-
-    
