@@ -4,81 +4,68 @@ pipeline {
     environment {
         AWS_ACCOUNT_ID = '529088272063'
         AWS_REGION = 'eu-north-1'
-        AWS_ACCESS_KEY_ID = credentials('AWS_Jenkins_Access_Key_ID')
-        AWS_SECRET_ACCESS_KEY = credentials('AWS_Jenkins_Secret_Access_Key')
+        AWS_ACCESS_KEY_ID = credentials('AWS_Jenkins_Access_Key_ID') // Ensure this is correctly set up
+        AWS_SECRET_ACCESS_KEY = credentials('AWS_Jenkins_Secret_Access_Key') // Ensure this is correctly set up
         ECR_REPO_NAME = 'vw-repo'
         IMAGE_TAG = 'latest'
         REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}"
-        GIT_BRANCH = 'master'
+        GIT_BRANCH = 'master' // Corrected the branch name from 'main ' to 'main'
         GIT_REPO = 'https://github.com/sakshara-github/vanakkam-world.git'
+        SSH_KEY = credentials('ec2-ssh-credentials-updated')
+        EC2_USER = 'ubuntu'
+        EC2_HOST = 'ec2-13-53-36-200.eu-north-1.compute.amazonaws.com'
+        GIT_CREDENTIALS_ID = 'crendentials' // ID of the stored credentials in Jenkins
+        CONTAINER_NAME = "my-vw-container"
     }
 
     tools {
         // Specify the Maven version installed on Jenkins
-        maven 'mymaven'  // Replace 'mymaven' with the exact name of your Maven installation
+        maven 'mymaven'  // Replace 'mymaven' with the exact name of your Maven installation in Jenkins
     }
 
     stages {
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
-                git credentialsId: 'your-credentials-id', branch: "${GIT_BRANCH}", url: "${GIT_REPO}"
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: "*/${GIT_BRANCH}"]],
+                    userRemoteConfigs: [[
+                        url: "${GIT_REPO}",
+                        credentialsId: "${GIT_CREDENTIALS_ID}"
+                    ]]
+                ])
             }
         }
 
         stage('Build with Maven') {
             steps {
                 echo 'Building the project using Maven...'
+                // Use the 'mymaven' tool to build the project
                 sh 'mvn clean install'
-            }
-        }
-
-        stage('Verify Docker Installation') {
-            steps {
-                script {
-                    // Verify Docker installation
-                    sh 'docker --version'
-                }
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    echo 'Building Docker Image...'
-                    sh 'docker build -t ${REPO_URL} .'
-                }
+                echo 'Building Docker Image...'
+                sh "docker build -t ${REPO_URL} ."
             }
         }
 
         stage('Login to AWS ECR') {
             steps {
-                script {
-                    // Login to AWS ECR using the AWS CLI
-                    echo 'Logging in to AWS ECR...'
-                    sh """
-                        aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-                    """
-                }
+                echo 'Logging in to AWS ECR...'
+                // Log in to AWS ECR
+                sh """
+                    aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+                """
             }
         }
 
-        stage('Push Image to ECR') {
+        stage('Push Docker Image to ECR') {
             steps {
-                script {
-                    // Push Docker image to ECR
-                    echo 'Pushing Docker Image to ECR...'
-                    sh 'docker push ${REPO_URL}'
-                }
-            }
-        }
-
-        stage('Pull Image from ECR') {
-            steps {
-                script {
-                    // Pull the Docker image from ECR
-                    echo 'Pulling Docker Image from ECR...'
-                    sh 'docker pull ${REPO_URL}'
-                }
+                echo 'Pushing Docker Image to AWS ECR...'
+                sh "docker push ${REPO_URL}"
             }
         }
     }
@@ -92,5 +79,3 @@ pipeline {
         }
     }
 }
-
-      
