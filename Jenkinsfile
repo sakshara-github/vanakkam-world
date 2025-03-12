@@ -20,11 +20,18 @@ pipeline {
             }
         }
 
-        stage('Build WAR') {
+        stage('Build with Maven') {
+            steps {
+                echo 'Building the project using Maven...'
+                sh 'mvn clean install'
+            }
+        }
+
+        stage('Verify Docker Installation') {
             steps {
                 script {
-                    // Run Maven to build the WAR file
-                    sh 'mvn clean package'
+                    // Verify Docker installation
+                    sh 'docker --version'
                 }
             }
         }
@@ -80,9 +87,8 @@ pipeline {
         }
     }
 }
-
-
-        
+     
+                            
 
         
   
