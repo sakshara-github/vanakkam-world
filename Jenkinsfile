@@ -9,7 +9,7 @@ pipeline {
         ECR_REPO_NAME = 'vw-repo'            // ECR Repository Name
         IMAGE_TAG = 'latest'                 // Image tag for the Docker image
         REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}"  // Full ECR URL
-        GIT_BRANCH = 'main'                  // Git branch to checkout (change if necessary)
+        GIT_BRANCH = 'master'                  // Git branch to checkout (change if necessary)
         GIT_REPO = 'https://github.com/sakshara-github/vanakkam-world.git'  // Git repository URL
         GIT_CREDENTIALS_ID = 'aws' // If using private repository, specify credentials ID
     }
