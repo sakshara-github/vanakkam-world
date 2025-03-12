@@ -9,23 +9,29 @@ pipeline {
         ECR_REPO_NAME = 'vw-repo'            // ECR Repository Name
         IMAGE_TAG = 'latest'                 // Image tag for the Docker image
         REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}"  // Full ECR URL
-        GIT_BRANCH = 'master'                  // Git branch to checkout (change if necessary)
+        GIT_BRANCH = 'master'                // Git branch to checkout (change to 'master' if that is your default branch)
         GIT_REPO = 'https://github.com/sakshara-github/vanakkam-world.git'  // Git repository URL
-        GIT_CREDENTIALS_ID = 'aws' // If using private repository, specify credentials ID
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                // Checkout code from GitHub (use credentials if repository is private)
-                git credentialsId: "${GIT_CREDENTIALS_ID}", branch: "${GIT_BRANCH}", url: "${GIT_REPO}"
+                git credentialsId: 'your-credentials-id', branch: "${GIT_BRANCH}", url: "${GIT_REPO}"
+            }
+        }
+
+        stage('Build WAR') {
+            steps {
+                script {
+                    // Run Maven to build the WAR file
+                    sh 'mvn clean package'
+                }
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Build the Docker image
                     echo 'Building Docker Image...'
                     sh 'docker build -t ${REPO_URL} .'
                 }
@@ -74,3 +80,9 @@ pipeline {
         }
     }
 }
+
+
+        
+
+        
+  
