@@ -2,53 +2,63 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = 'dockerhub'
-        DOCKERHUB_REPO = 'sudhakshara/vw-image'
-        DOCKER_IMAGE_TAG = "latest"
-    }
-
-    tools {
-        maven 'mymaven'  // Ensure this tool is configured in Jenkins
+        AWS_ACCOUNT_ID = '529088272063'      // Your AWS account ID
+        AWS_REGION = 'eu-north-1'         // AWS Region
+        AWS_ACCESS_KEY_ID = credentials          // AWS Access Key ID from Jenkins credentials
+        AWS_SECRET_ACCESS_KEY = credentials  //('AWS_Jenkins_Secret_Access_Key')  // AWS Secret Key from Jenkins credentials
+        ECR_REPO_NAME = 'vw-repo'      // ECR Repository Name
+        IMAGE_TAG = 'latest'                // Image tag for the Docker image
+        REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}"  // Full ECR URL
+        GIT_BRANCH = 'main'          // Git branch to checkout
+        GIT_REPO = 'https://github.com/sakshara-github/vanakkam-world.git'  // Git repository URL
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                git branch: 'master', url: 'https://github.com/sakshara-github/vanakkam-world.git'
+                // Checkout code from GitHub
+                git branch: "${GIT_BRANCH}", url: "${GIT_REPO}"
             }
         }
 
-        stage('Build with Maven') {
-            steps {
-                echo 'Building the project using Maven...'
-                sh 'mvn clean install'
-            }
-        }
-
-        stage('Verify Docker Installation') {
-            steps {
-                script {
-                    // Verify Docker installation
-                    sh 'docker --version'
-                }
-            }
-        }
-
-        stage('Build the Image') {
+        stage('Build Docker Image') {
             steps {
                 script {
                     // Build the Docker image
-                    sh "docker build -t ${DOCKERHUB_REPO}:${DOCKER_IMAGE_TAG} ."
+                    echo 'Building Docker Image...'
+                    sh 'docker build -t ${REPO_URL} .'
                 }
             }
         }
 
-        stage('Push to Dockerhub') {
+        stage('Login to AWS ECR') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS) {
-                        sh "docker push ${DOCKERHUB_REPO}:${DOCKER_IMAGE_TAG}"
-                    }
+                    // Login to AWS ECR using the AWS CLI
+                    echo 'Logging in to AWS ECR...'
+                    sh """
+                        aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+                    """
+                }
+            }
+        }
+
+        stage('Push Image to ECR') {
+            steps {
+                script {
+                    // Push Docker image to ECR
+                    echo 'Pushing Docker Image to ECR...'
+                    sh 'docker push ${REPO_URL}'
+                }
+            }
+        }
+
+        stage('Pull Image from ECR') {
+            steps {
+                script {
+                    // Pull the Docker image from ECR
+                    echo 'Pulling Docker Image from ECR...'
+                    sh 'docker pull ${REPO_URL}'
                 }
             }
         }
@@ -63,3 +73,5 @@ pipeline {
         }
     }
 }
+
+
