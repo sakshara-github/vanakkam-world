@@ -3,8 +3,7 @@ pipeline {
 
     environment {
         DOCKERHUB_CREDENTIALS = 'dockerhub'
-                               // DockerHub username
-        DOCKER_IMAGE = "sudhakshara/vw-image"
+        DOCKERHUB_REPO = 'sudhakshara/vw-image'
         DOCKER_IMAGE_TAG = "latest"
     }
 
