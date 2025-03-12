@@ -2,14 +2,15 @@ pipeline {
     agent any
 
     environment {
-        AWS_ACCOUNT_ID = '529088272063'      // Your AWS account ID
-        AWS_REGION = 'eu-north-1'         // AWS Region
-        AWS_ACCESS_KEY_ID = AWS_Jenkins_Access_Key_ID        // AWS Access Key ID from Jenkins credentials
-        AWS_SECRET_ACCESS_KEY = AWS_Jenkins_Secret_Access_Key  //('AWS_Jenkins_Secret_Access_Key')  // AWS Secret Key from Jenkins credentials
-        ECR_REPO_NAME = 'vw-repo'      // ECR Repository Name
-        IMAGE_TAG = 'latest'                // Image tag for the Docker image
+        AWS_ACCOUNT_ID = '529088272063'  // Your AWS account ID
+        AWS_REGION = 'eu-north-1'        // AWS Region
+        // Use Jenkins credentials to fetch the AWS Access Key and Secret Access Key securely
+        AWS_ACCESS_KEY_ID = credentials('AWS_Jenkins_Access_Key_ID')  // Access Key ID from Jenkins credentials
+        AWS_SECRET_ACCESS_KEY = credentials('AWS_Jenkins_Secret_Access_Key')  // Secret Access Key from Jenkins credentials
+        ECR_REPO_NAME = 'vw-repo'        // ECR Repository Name
+        IMAGE_TAG = 'latest'             // Image tag for the Docker image
         REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}"  // Full ECR URL
-        GIT_BRANCH = 'main'          // Git branch to checkout
+        GIT_BRANCH = 'main'              // Git branch to checkout
         GIT_REPO = 'https://github.com/sakshara-github/vanakkam-world.git'  // Git repository URL
     }
 
@@ -74,4 +75,5 @@ pipeline {
     }
 }
 
-
+        
+  
