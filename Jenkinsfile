@@ -12,7 +12,9 @@ pipeline {
         GIT_BRANCH = 'master'                // Git branch to checkout (change to 'master' if that is your default branch)
         GIT_REPO = 'https://github.com/sakshara-github/vanakkam-world.git'  // Git repository URL
     }
-
+    tools{
+        maven 'mymaven'
+    }
     stages {
         stage('Checkout Code') {
             steps {
