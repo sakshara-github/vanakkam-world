@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    tools {
-        // Specify the Maven version installed on Jenkins
-        maven 'mymaven'  // Replace 'mymaven' with the exact name of your Maven installation
-    }
-
     environment {
         AWS_ACCOUNT_ID = '529088272063'
         AWS_REGION = 'eu-north-1'
@@ -16,6 +11,11 @@ pipeline {
         REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}"
         GIT_BRANCH = 'master'
         GIT_REPO = 'https://github.com/sakshara-github/vanakkam-world.git'
+    }
+
+    tools {
+        // Specify the Maven version installed on Jenkins
+        maven 'mymaven'  // Replace 'mymaven' with the exact name of your Maven installation
     }
 
     stages {
@@ -93,12 +93,4 @@ pipeline {
     }
 }
 
-
-       
-               
-           
-    
-                            
-
-        
-  
+      
