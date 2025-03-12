@@ -1,20 +1,23 @@
 pipeline {
     agent any
 
+    tools {
+        // Specify the Maven version installed on Jenkins
+        maven 'mymaven'  // Replace 'mymaven' with the exact name of your Maven installation
+    }
+
     environment {
-        AWS_ACCOUNT_ID = '529088272063'      // Your AWS account ID
-        AWS_REGION = 'eu-north-1'            // AWS Region
-        AWS_ACCESS_KEY_ID = credentials('AWS_Jenkins_Access_Key_ID')  // Access Key ID from Jenkins credentials
-        AWS_SECRET_ACCESS_KEY = credentials('AWS_Jenkins_Secret_Access_Key')  // Secret Access Key from Jenkins credentials
-        ECR_REPO_NAME = 'vw-repo'            // ECR Repository Name
-        IMAGE_TAG = 'latest'                 // Image tag for the Docker image
-        REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}"  // Full ECR URL
-        GIT_BRANCH = 'master'                // Git branch to checkout (change to 'master' if that is your default branch)
-        GIT_REPO = 'https://github.com/sakshara-github/vanakkam-world.git'  // Git repository URL
+        AWS_ACCOUNT_ID = '529088272063'
+        AWS_REGION = 'eu-north-1'
+        AWS_ACCESS_KEY_ID = credentials('AWS_Jenkins_Access_Key_ID')
+        AWS_SECRET_ACCESS_KEY = credentials('AWS_Jenkins_Secret_Access_Key')
+        ECR_REPO_NAME = 'vw-repo'
+        IMAGE_TAG = 'latest'
+        REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}"
+        GIT_BRANCH = 'master'
+        GIT_REPO = 'https://github.com/sakshara-github/vanakkam-world.git'
     }
-    tools{
-        maven 'mymaven'
-    }
+
     stages {
         stage('Checkout Code') {
             steps {
@@ -89,7 +92,12 @@ pipeline {
         }
     }
 }
-     
+
+
+       
+               
+           
+    
                             
 
         
