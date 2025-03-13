@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     environment {
-        registry = "529088272063.dkr.ecr.eu-north-1.amazonaws.com/vanakkam-jenkins-repo"
+        registry = "529088272063.dkr.ecr.us-west-2.amazonaws.com/vanakkam-aws-ecr"
     }
 
     tools {
@@ -35,9 +35,9 @@ pipeline {
         stage('Pushing to ECR') {
             steps {
                 script {
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws_cred', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-                        sh 'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 529088272063.dkr.ecr.eu-north-1.amazonaws.com'
-                        sh 'docker push 529088272063.dkr.ecr.eu-north-1.amazonaws.com/vanakkam-jenkins-repo:latest'
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                        sh 'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 529088272063.dkr.ecr.us-east-2.amazonaws.com'
+                        sh 'docker push 529088272063.dkr.ecr.us-east-2.amazonaws.com/vanakkam-aws-ecr:latest'
                     }
                 }
             }
@@ -53,7 +53,7 @@ pipeline {
         stage('Docker Run') {
             steps {
                 script {
-                    sh 'docker run -d -p 9096:8080 --rm --name mytomcatContainer 529088272063.dkr.ecr.eu-north-1.amazonaws.com/vanakkam-jenkins-repo:latest'
+                    sh 'docker run -d -p 9096:8080 --rm --name mytomcatContainer 529088272063.dkr.ecr.us-east-2.amazonaws.com/vanakkam-aws-ecr:latest'
                 }
             }
         }
