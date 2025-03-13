@@ -13,7 +13,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'master', url: 'https://github.com/Meenakshi0812/jenkins-ECR.git'
+                git branch: 'master', url: 'https://github.com/sakshara-github/vanakkam-world.git'
             }
         }
 
