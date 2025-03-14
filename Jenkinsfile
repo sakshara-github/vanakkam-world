@@ -1,61 +1,80 @@
 pipeline {
     agent any
-    
+
     environment {
-        registry = "529088272063.dkr.ecr.us-west-2.amazonaws.com/vanakkam-aws-ecr"
+        AWS_REGION = 'ap-south-1' // Change as needed
+        AWS_ACCOUNT_ID = '529088272063' // Replace with your AWS Account ID
+        ECR_REPO_NAME = 'my-vanakkam-repo'
+        IMAGE_TAG = "latest"
+        DOCKER_IMAGE = "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME:$IMAGE_TAG"
+        EC2_USER = 'ubuntu'
+        EC2_HOST = '15.207.88.224' // Replace with EC2 instance's public IP
+        SSH_CREDENTIALS_ID = 'EC2_SSH_KEY'
+        AWS_CREDENTIALS_ID = 'AWS_CREDENTIALS_ID'
     }
 
-    tools {
-        // Assuming Maven is installed globally in Jenkins
-        maven 'mymaven' // Change this to the name of your installed Maven tool in Jenkins
-    }
-   
     stages {
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
-                git branch: 'master', url: 'https://github.com/sakshara-github/vanakkam-world.git'
+                git 'https://github.com/your-repo.git' // Replace with your repo
             }
         }
 
-        stage('Build Maven Project') {
+        stage('Build with Maven') {
             steps {
-                // Run Maven clean and install to build the project
-                sh 'mvn clean install'
+                sh 'mvn clean package -DskipTests'
             }
         }
 
-        stage('Building image') {
+        stage('Login to AWS ECR') {
             steps {
-                script {
-                    dockerImage = docker.build registry
+                withCredentials([usernamePassword(credentialsId: AWS_CREDENTIALS_ID, usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    sh """
+                    aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+                    aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+                    aws configure set region $AWS_REGION
+                    aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+                    """
                 }
             }
         }
 
-        stage('Pushing to ECR') {
+        stage('Build and Tag Docker Image') {
             steps {
-                script {
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-                        sh 'aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 529088272063.dkr.ecr.us-west-2.amazonaws.com'
-                        sh 'docker push 529088272063.dkr.ecr.us-west-2.amazonaws.com/vanakkam-aws-ecr:latest'
-                    }
-                }
+                sh "docker build -t $DOCKER_IMAGE ."
+                sh "docker tag $DOCKER_IMAGE $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME:$IMAGE_TAG"
             }
         }
 
-        stage('Stop previous containers') {
+        stage('Push Docker Image to ECR') {
             steps {
-                sh 'docker ps -f name=mytomcatContainer -q | xargs --no-run-if-empty docker container stop'
-                sh 'docker container ls -a -fname=mytomcatContainer -q | xargs -r docker container rm'
+                sh "docker push $DOCKER_IMAGE"
             }
         }
 
-        stage('Docker Run') {
+        stage('Deploy to EC2') {
             steps {
-                script {
-                    sh 'docker run -d -p 9096:8080 --rm --name mytomcatContainer 529088272063.dkr.ecr.us-west-2.amazonaws.com/vanakkam-aws-ecr:latest'
+                sshagent(credentials: [SSH_CREDENTIALS_ID]) {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << 'EOF'
+                    aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+                    docker pull $DOCKER_IMAGE
+                    docker stop my-container || true
+                    docker rm my-container || true
+                    docker run -d --name my-container -p 8080:8080 $DOCKER_IMAGE
+                    EOF
+                    """
                 }
             }
+        }
+    }
+
+    post {
+        success {
+            echo 'Deployment successful!'
+        }
+        failure {
+            echo 'Deployment failed!'
         }
     }
 }
