@@ -1,55 +1,47 @@
 pipeline {
     agent any
-
+    
     environment {
+        AWS_ACCOUNT_ID = "529088272063"
         AWS_REGION = "ap-south-1"
-        ECR_REPO = "my-vanakkam-repo"
+        ECR_REPOSITORY = "my-vanakkam-repo"
         IMAGE_TAG = "latest"
+        DOCKER_IMAGE = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}"
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                git branch: 'master', url: 'https://github.com/sakshara-github/vanakkam-world.git'
+                git 'https://github.com/sakshara-github/vanakkam-world.git'
             }
         }
 
         stage('Build with Maven') {
+            agent {
+                docker { image 'maven:3.9.9' }
+            }
             steps {
                 sh 'mvn clean package'
             }
         }
 
-        stage('Docker Build & Push to ECR') {
+        stage('Authenticate to AWS ECR') {
             steps {
-                script {
-                    def accountId = sh(script: "aws sts get-caller-identity --query Account --output text", returnStdout: true).trim()
-                    def ecrUri = "${accountId}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}"
+                sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+            }
+        }
 
-                    // Authenticate to AWS ECR
-                    sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ecrUri}"
-
-                    // Build and push the Docker image
-                    sh "docker build -t ${ecrUri}:${IMAGE_TAG} ."
-                    sh "docker push ${ecrUri}:${IMAGE_TAG}"
-                }
+        stage('Build & Push Docker Image') {
+            steps {
+                sh "docker build -t ${DOCKER_IMAGE} ."
+                sh "docker push ${DOCKER_IMAGE}"
             }
         }
 
         stage('Deploy to EC2') {
             steps {
-                script {
-                    sshagent(['ec2-key']) {
-                        sh '''
-                        ssh -o StrictHostKeyChecking=no ec2-user@your-ec2-ip << EOF
-                        aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ecrUri}
-                        docker pull ${ecrUri}:${IMAGE_TAG}
-                        docker stop my-container || true
-                        docker rm my-container || true
-                        docker run -d --name my-container -p 80:8080 ${ecrUri}:${IMAGE_TAG}
-                        EOF
-                        '''
-                    }
+                sshagent(['your-ssh-key-id']) {
+                    sh "ssh -o StrictHostKeyChecking=no ec2-user@your-ec2-ip 'docker pull ${DOCKER_IMAGE} && docker run -d -p 8080:8080 ${DOCKER_IMAGE}'"
                 }
             }
         }
@@ -57,10 +49,10 @@ pipeline {
 
     post {
         failure {
-            echo "Deployment failed!"
+            echo 'Deployment failed!'
         }
         success {
-            echo "Deployment successful!"
+            echo 'Deployment successful!'
         }
     }
 }
