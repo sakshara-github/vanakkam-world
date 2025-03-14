@@ -8,6 +8,9 @@ pipeline {
         IMAGE_TAG = "latest"
         DOCKER_IMAGE = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}"
     }
+    tools {
+    maven 'mymaven'
+    }
 
     stages {
         stage('Checkout Code') {
@@ -16,9 +19,7 @@ pipeline {
             }
         }
 
-        stage('Build with Maven') {
-            agent {
-                docker { image 'maven:3.9.9' }
+        
             }
             steps {
                 sh 'mvn clean package'
