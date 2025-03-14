@@ -20,11 +20,12 @@ pipeline {
             }
         }
 
-        stage('Build with Maven') {
+       stage('Build with Maven') {
             steps {
-                sh 'mvn clean package'
+                echo 'Building the project using Maven...'
+                sh 'mvn clean install'
             }
-        }
+       }
 
         stage('Authenticate to AWS ECR') {
             steps {
