@@ -16,7 +16,7 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                git 'https://github.com/sakshara-github/vanakkam-world.git' // Replace with your repo
+                git branch: 'master', url: 'https://github.com/sakshara-github/vanakkam-world.git' // Replace with your repo
             }
         }
 
