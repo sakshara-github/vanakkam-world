@@ -8,8 +8,9 @@ pipeline {
         IMAGE_TAG = "latest"
         DOCKER_IMAGE = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}"
     }
+
     tools {
-    maven 'mymaven'
+        maven 'mymaven'
     }
 
     stages {
@@ -19,8 +20,7 @@ pipeline {
             }
         }
 
-        
-            }
+        stage('Build with Maven') {
             steps {
                 sh 'mvn clean package'
             }
@@ -28,32 +28,12 @@ pipeline {
 
         stage('Authenticate to AWS ECR') {
             steps {
-                sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+                sh """
+                aws ecr get-login-password --region ${AWS_REGION} | \
+                docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+                """
             }
         }
 
         stage('Build & Push Docker Image') {
-            steps {
-                sh "docker build -t ${DOCKER_IMAGE} ."
-                sh "docker push ${DOCKER_IMAGE}"
-            }
-        }
-
-        stage('Deploy to EC2') {
-            steps {
-                sshagent(['your-ssh-key-id']) {
-                    sh "ssh -o StrictHostKeyChecking=no ec2-user@your-ec2-ip 'docker pull ${DOCKER_IMAGE} && docker run -d -p 8080:8080 ${DOCKER_IMAGE}'"
-                }
-            }
-        }
-    }
-
-    post {
-        failure {
-            echo 'Deployment failed!'
-        }
-        success {
-            echo 'Deployment successful!'
-        }
-    }
-}
+  
