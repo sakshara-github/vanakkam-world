@@ -12,7 +12,7 @@ pipeline {
         GIT_BRANCH = 'master'
         GIT_REPO = 'https://github.com/sakshara-github/vanakkam-world.git'
         EC2_USER = 'ubuntu'
-        EC2_HOST = 'ec2-13-234-66-179.ap-south-1.compute.amazonaws.com'
+        EC2_HOST = 'ec2-15-207-54-89.ap-south-1.compute.amazonaws.com'
         GIT_CREDENTIALS_ID = 'github' // ID of the stored credentials in Jenkins
         CONTAINER_NAME = "my-vw-container"
         SSH_KEY_ID = 'EC2_SSH_KEY' // Added SSH key ID
