@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         AWS_ACCOUNT_ID = '529088272063'
-        AWS_REGION = 'us-west-1'
+        AWS_REGION = 'eu-west-2'
         AWS_ACCESS_KEY_ID = credentials('AWS_ACCESSKEY_ID') // Ensure this is correctly set up
         AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRETKEY_ID') // Ensure this is correctly set up
         ECR_REPO_NAME = 'pipeline-repo'
