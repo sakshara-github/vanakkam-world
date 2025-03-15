@@ -3,18 +3,18 @@ pipeline {
 
     environment {
         AWS_ACCOUNT_ID = '529088272063'
-        AWS_REGION = 'ap-south-1'
+        AWS_REGION = 'eu-west-2'
         AWS_ACCESS_KEY_ID = credentials('AWS_CREDENTIALS_ID') // Ensure this is correctly set up
         AWS_SECRET_ACCESS_KEY = credentials('AWS_CREDENTIALS_ID') // Ensure this is correctly set up
-        ECR_REPO_NAME = 'my-vanakkam-repo'
+        ECR_REPO_NAME = 'image-repo'
         IMAGE_TAG = 'latest'
         REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}"
         GIT_BRANCH = 'master'
         GIT_REPO = 'https://github.com/sakshara-github/vanakkam-world.git'
         EC2_USER = 'ubuntu'
-        EC2_HOST = 'ec2-3-109-203-138.ap-south-1.compute.amazonaws.com'
+        EC2_HOST = 'ec2-18-170-64-237.eu-west-2.compute.amazonaws.com'
         GIT_CREDENTIALS_ID = 'github' // ID of the stored credentials in Jenkins
-        CONTAINER_NAME = "my-vw-container"
+        CONTAINER_NAME = "my-container"
         SSH_KEY_ID = 'EC2_SSH_KEY' // Added SSH key ID
     }
 
