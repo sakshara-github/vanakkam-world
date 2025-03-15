@@ -3,18 +3,19 @@ pipeline {
 
     environment {
         AWS_ACCOUNT_ID = '529088272063'
-        AWS_REGION = 'eu-north-1'
-        AWS_ACCESS_KEY_ID = credentials('AWS_Jenkins_Access_Key_ID') // Ensure this is correctly set up
-        AWS_SECRET_ACCESS_KEY = credentials('AWS_Jenkins_Secret_Access_Key') // Ensure this is correctly set up
-        ECR_REPO_NAME = 'vw-repo'
+        AWS_REGION = 'ap-south-1'
+        AWS_ACCESS_KEY_ID = credentials('AWS_CREDENTIALS_ID') // Ensure this is correctly set up
+        AWS_SECRET_ACCESS_KEY = credentials('AWS_CREDENTIALS_ID') // Ensure this is correctly set up
+        ECR_REPO_NAME = 'my-vanakkam-repo'
         IMAGE_TAG = 'latest'
         REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}"
         GIT_BRANCH = 'master'
         GIT_REPO = 'https://github.com/sakshara-github/vanakkam-world.git'
         EC2_USER = 'ubuntu'
-        EC2_HOST = 'ec2-13-53-36-200.eu-north-1.compute.amazonaws.com'
-        GIT_CREDENTIALS_ID = 'crendentials' // ID of the stored credentials in Jenkins
+        EC2_HOST = 'ec2-13-234-66-179.ap-south-1.compute.amazonaws.com'
+        GIT_CREDENTIALS_ID = 'github' // ID of the stored credentials in Jenkins
         CONTAINER_NAME = "my-vw-container"
+        SSH_KEY_ID = 'EC2_SSH_KEY' // Added SSH key ID
     }
 
     tools {
@@ -59,7 +60,7 @@ pipeline {
 
         stage('Deploy to EC2') {
             steps {
-                sshagent(['your-ssh-key-id']) {
+                sshagent([SSH_KEY_ID]) {
                     sh """
                     ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} '
                     docker pull ${REPO_URL} &&
