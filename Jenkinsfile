@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         AWS_ACCOUNT_ID = '529088272063'
-        AWS_REGION = 'eu-west-2'
+        AWS_REGION = 'us-east-2'
         AWS_ACCESS_KEY_ID = credentials('AWS_ACCESSKEY_ID') // Ensure this is correctly set up
         AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRETKEY_ID') // Ensure this is correctly set up
         ECR_REPO_NAME = 'image-repo'
@@ -12,7 +12,7 @@ pipeline {
         GIT_BRANCH = 'master'
         GIT_REPO = 'https://github.com/sakshara-github/vanakkam-world.git'
         EC2_USER = 'ubuntu'
-        EC2_HOST = 'ec2-18-132-41-247.eu-west-2.compute.amazonaws.com'
+        EC2_HOST = 'ec2-3-149-231-193.us-east-2.compute.amazonaws.com'
         GIT_CREDENTIALS_ID = 'github-credentials' // ID of the stored credentials in Jenkins
         CONTAINER_NAME = "my-container"
         SSH_KEY_ID = 'ssh-key' // Added SSH key ID
@@ -66,7 +66,7 @@ pipeline {
                     docker pull ${REPO_URL} &&
                     docker stop ${CONTAINER_NAME} || true &&
                     docker rm ${CONTAINER_NAME} || true &&
-                    docker run -d --name ${CONTAINER_NAME} -p 8080:8080 ${REPO_URL}
+                    docker run -d --name ${CONTAINER_NAME} -p 8084:8080 ${REPO_URL}
                     '
                     """
                 }
