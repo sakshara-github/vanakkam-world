@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        AWS_ACCOUNT_ID = '529088272063'
+        AWS_ACCOUNT_ID = '231552173810'
         AWS_REGION = 'us-east-1'
         AWS_ACCESS_KEY_ID = credentials('AWS_ACCESSKEY_ID') // Ensure this is correctly set up
         AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRETKEY_ID') // Ensure this is correctly set up
@@ -12,10 +12,10 @@ pipeline {
         GIT_BRANCH = 'master'
         GIT_REPO = 'https://github.com/sakshara-github/vanakkam-world.git'
         EC2_USER = 'ubuntu'
-        EC2_HOST = 'ec2-100-27-186-186.compute-1.amazonaws.com'
+        EC2_HOST = 'ec2-18-233-161-249.compute-1.amazonaws.com'
         GIT_CREDENTIALS_ID = 'github' // ID of the stored credentials in Jenkins
         CONTAINER_NAME = "my-container"
-        SSH_KEY_ID = '7a2465de-b8e7-4dd4-a38b-06690b82e508' // Added SSH key ID
+        SSH_KEY_ID = 'ssh-key' // Added SSH key ID
     }
 
     tools {
