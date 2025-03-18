@@ -6,7 +6,7 @@ pipeline {
         AWS_REGION = 'us-east-1'
         AWS_ACCESS_KEY_ID = credentials('AWS_ACCESSKEY_ID') // Ensure this is correctly set up
         AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRETKEY_ID') // Ensure this is correctly set up
-        ECR_REPO_NAME = 'vw-jenkins-rpo'
+        ECR_REPO_NAME = 'jenkins-rpo'
         IMAGE_TAG = 'latest'
         REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}"
         GIT_BRANCH = 'master'
