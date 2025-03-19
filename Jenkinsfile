@@ -32,10 +32,21 @@ pipeline {
             }
         }
 
+        stage('Verify Workspace') {
+            steps {
+                sh "ls -la" // Check if pom.xml exists
+            }
+        }
+
         stage('Build with Maven (Using Docker)') {
             steps {
                 sh """
-                docker run --rm -v \$(pwd):/app -w /app maven:3.8.5-openjdk-17 sh -c "ls -la /app && mvn clean package"
+                docker run --rm \
+                -v \$(pwd):/app \
+                -v /root/.m2:/root/.m2 \  # Cache dependencies for faster builds
+                -w /app \
+                maven:3.8.5-openjdk-17 \
+                mvn clean package
                 """
             }
         }
