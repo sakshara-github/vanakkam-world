@@ -1,5 +1,9 @@
 pipeline {
     agent any
+         docker {
+            image 'maven:3.9.5-eclipse-temurin-17' // Use the latest Maven + JDK version
+            args '-v $HOME/.m2:/root/.m2' // Cache dependencies for faster builds
+        }
 
     environment {
         AWS_ACCOUNT_ID = '231552173810'
@@ -12,16 +16,13 @@ pipeline {
         GIT_BRANCH = 'master'
         GIT_REPO = 'https://github.com/sakshara-github/vanakkam-world.git'
         EC2_USER = 'ubuntu'
-        EC2_HOST = 'ec2-3-82-113-71.compute-1.amazonaws.com'
+        EC2_HOST = 'ec2-3-91-133-17.compute-1.amazonaws.com'
         GIT_CREDENTIALS_ID = 'github' // ID of the stored credentials in Jenkins
         CONTAINER_NAME = "my-container"
         SSH_KEY_ID = 'ssh-key' // Added SSH key ID
     }
 
-    tools {
-        maven 'mymaven'  // Replace 'mymaven' with the exact name of your Maven installation in Jenkins
-    }
-
+   
     stages {
         stage('Checkout Code') {
             steps {
