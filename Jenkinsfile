@@ -1,10 +1,6 @@
 pipeline {
     agent any
-         docker {
-            image 'maven:3.9.5-eclipse-temurin-17' // Use the latest Maven + JDK version
-            args '-v $HOME/.m2:/root/.m2' // Cache dependencies for faster builds
-        }
-
+        
     environment {
         AWS_ACCOUNT_ID = '231552173810'
         AWS_REGION = 'us-east-1'
@@ -21,7 +17,9 @@ pipeline {
         CONTAINER_NAME = "my-container"
         SSH_KEY_ID = 'ssh-key' // Added SSH key ID
     }
-
+     tools {
+        maven 'mymaven' // Use the Maven tool configured in Jenkins
+    }
    
     stages {
         stage('Checkout Code') {
