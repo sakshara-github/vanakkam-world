@@ -35,7 +35,7 @@ pipeline {
         stage('Build with Maven (Using Docker)') {
             steps {
                 sh """
-                docker run --rm -v \$(pwd):/app -w /app maven:3.8.5-openjdk-17 mvn clean package
+                docker run --rm -v \$(pwd):/app -w /app maven:3.8.5-openjdk-17 sh -c "ls -la /app && mvn clean package"
                 """
             }
         }
