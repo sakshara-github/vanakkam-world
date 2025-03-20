@@ -1,23 +1,26 @@
 pipeline {
     agent any
-
+        
     environment {
         AWS_ACCOUNT_ID = '231552173810'
-        AWS_REGION = 'us-east-1'
-        AWS_ACCESS_KEY_ID = credentials('AWS_ACCESSKEY_ID')
-        AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRETKEY_ID')
-        ECR_REPO_NAME = 'jenkins-repo'
+        AWS_REGION = 'us-east-2'
+        AWS_ACCESS_KEY_ID = credentials('AWS_ACCESSKEY_ID') // Ensure this is correctly set up
+        AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRETKEY_ID') // Ensure this is correctly set up
+        ECR_REPO_NAME = 'vw-repo'
         IMAGE_TAG = 'latest'
         REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}"
         GIT_BRANCH = 'master'
         GIT_REPO = 'https://github.com/sakshara-github/vanakkam-world.git'
         EC2_USER = 'ubuntu'
-        EC2_HOST = 'ec2-54-165-205-142.compute-1.amazonaws.com'
-        GIT_CREDENTIALS_ID = 'github'
+        EC2_HOST = 'ec2-18-218-133-156.us-east-2.compute.amazonaws.com'
+        GIT_CREDENTIALS_ID = 'github' // ID of the stored credentials in Jenkins
         CONTAINER_NAME = "my-container"
-        SSH_KEY_ID = 'ssh-key'
+        SSH_KEY_ID = 'ssh-key' // Added SSH key ID
     }
-
+     tools {
+        maven 'mymaven' // Use the Maven tool configured in Jenkins
+    }
+   
     stages {
         stage('Checkout Code') {
             steps {
@@ -32,22 +35,9 @@ pipeline {
             }
         }
 
-        stage('Verify Workspace') {
+        stage('Build with Maven') {
             steps {
-                sh "ls -la" // Check if pom.xml exists
-            }
-        }
-
-        stage('Build with Maven (Using Docker)') {
-            steps {
-                sh """
-                docker run --rm \
-                -v \$(pwd):/app \
-                -v /root/.m2:/root/.m2 \  # Cache dependencies for faster builds
-                -w /app \
-                maven:3.8.5-openjdk-17 \
-                mvn clean package
-                """
+                sh 'mvn clean install'
             }
         }
 
