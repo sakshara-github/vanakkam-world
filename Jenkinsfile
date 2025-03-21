@@ -2,47 +2,66 @@ pipeline {
     agent any
 
     environment {
-        EC2_USER = 'ubuntu'
-        EC2_HOST = '34.215.221.166'  // Your EC2 instance public/private IP
-        CONTAINER_NAME = 'my-container'  // Name of your running container
-        IMAGE_NAME = 'vanakkam-world-repo'  // Example: my-ecr-repo:latest (already on EC2)
-        AWS_REGION = 'us-west-2'  // AWS region (e.g., us-east-1)
-        AWS_ACCOUNT_ID = '231552173810'  // AWS Account ID
-
-        SSH_CREDENTIALS_ID = 'ssh-credentials'  // Jenkins SSH credential ID
-        AWS_CREDENTIALS_ID = 'aws-credentials'  // Jenkins AWS credential ID
-        GIT_CREDENTIALS_ID = 'github'  // Jenkins GitHub credential ID
-        GIT_REPO_URL = 'https://github.com/sakshara-github/vanakkam-world.git'  // GitHub repo
-        GIT_BRANCH = 'master'  // Branch to checkout
+        AWS_REGION = 'us-east-1' // AWS Region
+        AWS_ACCOUNT_ID = '231552173810' // Your AWS account ID
+        ECR_REPO = 'jenkins-repo' // ECR repository name
+        CONTAINER_NAME = 'my-app' // Running container name
+        PORT_MAPPING = '8085:8080' // Port mapping
+        EC2_HOST = 'ubuntu@3.95.171.132' // EC2 instance details
+        GITHUB_REPO = 'git@github.com:your-username/your-repo.git' // GitHub repository
+        BRANCH = 'master' // GitHub branch
     }
 
     stages {
         stage('Checkout Code from GitHub') {
             steps {
-                git branch: GIT_BRANCH,
-                    credentialsId: GIT_CREDENTIALS_ID,
-                    url: GIT_REPO_URL
+                script {
+                    // Clone the GitHub repository using SSH key stored in Jenkins
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: "*/$BRANCH"]],
+                        userRemoteConfigs: [[
+                            url: GITHUB_REPO,
+                            credentialsId: 'github-ssh-key' // SSH Key credential ID from Jenkins
+                        ]]
+                    ])
+                }
             }
         }
 
-        stage('Restart Container on EC2') {
+        stage('Login to AWS ECR') {
             steps {
-                sshagent([SSH_CREDENTIALS_ID]) {
-                    sh """
-                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} << EOF
-                            echo "Logging into AWS ECR..."
-                            aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-                            
-                            echo "Stopping existing container..."
-                            docker stop ${CONTAINER_NAME} || true
+                withCredentials([aws(credentialsId: 'aws-credentials', region: "$AWS_REGION")]) {
+                    script {
+                        sh "aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+                    }
+                }
+            }
+        }
 
-                            echo "Removing existing container..."
-                            docker rm ${CONTAINER_NAME} || true
+        stage('Pull Latest Image from ECR') {
+            steps {
+                script {
+                    sh "docker pull $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:latest"
+                }
+            }
+        }
 
-                            echo "Restarting container with existing image..."
-                            docker run -d --name ${CONTAINER_NAME} -p 83:8080 ${IMAGE_NAME}
+        stage('Deploy to EC2') {
+            steps {
+                script {
+                    // Connect to EC2 and deploy the container
+                    sshagent(['ec2-ssh-key']) {
+                        sh """
+                        ssh -o StrictHostKeyChecking=no $EC2_HOST <<EOF
+                            docker stop $CONTAINER_NAME || true
+                            docker rm $CONTAINER_NAME || true
+                            docker pull $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:latest
+                            docker run -d --name $CONTAINER_NAME -p $PORT_MAPPING $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:latest
+                            docker image prune -f
                         EOF
-                    """
+                        """
+                    }
                 }
             }
         }
