@@ -12,7 +12,7 @@ pipeline {
         SSH_CREDENTIALS_ID = 'ssh-credentials'  // Jenkins SSH credential ID
         AWS_CREDENTIALS_ID = 'aws-credentials'  // Jenkins AWS credential ID
         GIT_CREDENTIALS_ID = 'github'  // Jenkins GitHub credential ID
-        GIT_REPO_URL = 'git@github.com:your-username/your-repo.git'  // GitHub repo
+        GIT_REPO_URL = 'https://github.com/sakshara-github/vanakkam-world.git'  // GitHub repo
         GIT_BRANCH = 'master'  // Branch to checkout
     }
 
