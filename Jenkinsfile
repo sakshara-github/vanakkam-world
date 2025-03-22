@@ -2,13 +2,13 @@ pipeline {
     agent any
 
     environment {
-        AWS_REGION = 'us-east-1' // AWS Region
+        AWS_REGION = 'us-west-2' // AWS Region
         AWS_ACCOUNT_ID = '231552173810' // Your AWS account ID
-        ECR_REPO = 'jenkins-repo' // ECR repository name
+        ECR_REPO = 'vanakkam-world-repo' // ECR repository name
         CONTAINER_NAME = 'my-app' // Running container name
         PORT_MAPPING = '8085:8080' // Port mapping
-        EC2_HOST = 'ubuntu@3.95.171.132' // EC2 instance details
-        GITHUB_REPO = 'git@github.com:your-username/your-repo.git' // GitHub repository
+        EC2_HOST = 'ubuntu@35.88.122.90' // EC2 instance details
+        GITHUB_REPO = 'https://github.com/sakshara-github/vanakkam-world.git' // GitHub repository
         BRANCH = 'master' // GitHub branch
     }
 
@@ -22,7 +22,7 @@ pipeline {
                         branches: [[name: "*/$BRANCH"]],
                         userRemoteConfigs: [[
                             url: GITHUB_REPO,
-                            credentialsId: 'github-ssh-key' // SSH Key credential ID from Jenkins
+                            credentialsId: 'github' // SSH Key credential ID from Jenkins
                         ]]
                     ])
                 }
@@ -51,7 +51,7 @@ pipeline {
             steps {
                 script {
                     // Connect to EC2 and deploy the container
-                    sshagent(['ec2-ssh-key']) {
+                    sshagent(['ssh-credentials']) {
                         sh """
                         ssh -o StrictHostKeyChecking=no $EC2_HOST <<EOF
                             docker stop $CONTAINER_NAME || true
