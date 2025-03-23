@@ -22,7 +22,7 @@ pipeline {
                         branches: [[name: "*/$BRANCH"]],
                         userRemoteConfigs: [[
                             url: GITHUB_REPO,
-                            credentialsId: 'github' // SSH Key credential ID from Jenkins
+                            credentialsId: 'ssh-credentials' // SSH Key credential ID from Jenkins
                         ]]
                     ])
                 }
