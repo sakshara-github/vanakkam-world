@@ -20,9 +20,9 @@ pipeline {
             steps {
                      checkout([
                     $class: 'GitSCM',
-                    branches: [[name: '*/monika-wex']],
+                    branches: [[name: '*/master']],
                     userRemoteConfigs: [[
-                        url: 'https://github.com/cubensquare/fms-wex.git',
+                        url: '',
                         credentialsId: GIT_CREDENTIALS_ID
                     ]]
                 ])
