@@ -52,7 +52,7 @@ pipeline {
                             docker pull ${REPO_URL}
                             
                             # Run the container
-                            docker run -d --name ${CONTAINER_NAME} -p 83:8080 ${REPO_URL}
+                            docker run -d --name ${CONTAINER_NAME} -p 85:8080 ${REPO_URL}
                         EOF
                     """
                 }
