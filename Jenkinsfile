@@ -7,7 +7,7 @@ pipeline {
         AWS_ACCESS_KEY_ID = credentials('AWS_Jenkins_Credentials')
         AWS_SECRET_ACCESS_KEY = credentials('AWS_Jenkins_Credentials')
         ECR_REPO_NAME = 'vanakkam-repo'
-        IMAGE_TAG = 'v1'
+        IMAGE_TAG = 'latest'
         REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}"
         SSH_KEY = credentials('ec2-ssh-credentials-updated')
         EC2_USER = 'ubuntu'
