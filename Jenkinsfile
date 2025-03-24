@@ -10,7 +10,7 @@ pipeline {
         IMAGE_TAG = 'v1'
         REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}"
         GIT_BRANCH = 'master'
-        GIT_REPO = 'https://github.com/cubensquare/fms-wex'
+        GIT_REPO = 'https://github.com/sakshara-github/vanakkam-world.git'
         SSH_KEY = credentials('ec2-ssh-credentials-updated')
         EC2_USER = 'ubuntu'
         EC2_HOST = 'ec2-34-236-152-71.compute-1.amazonaws.com'
@@ -23,9 +23,9 @@ pipeline {
             steps {
                      checkout([
                     $class: 'GitSCM',
-                    branches: [[name: '*/monika-wex']],
+                    branches: [[name: '*/']],
                     userRemoteConfigs: [[
-                        url: 'https://github.com/cubensquare/fms-wex.git',
+                        url: 'https://github.com/sakshara-github/vanakkam-world.git',
                         credentialsId: GIT_CREDENTIALS_ID
                     ]]
                 ])
