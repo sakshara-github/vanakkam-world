@@ -50,7 +50,7 @@ pipeline {
                             docker stop ${CONTAINER_NAME} || true &&
                             docker rm ${CONTAINER_NAME} || true &&
                             docker pull ${REPO_URL} &&
-                            docker run -d --name ${CONTAINER_NAME} -p 88:8080 ${REPO_URL}
+                            docker run -d --name ${CONTAINER_NAME} -p 89:8080 ${REPO_URL}
                         '"
                     """
                 }
