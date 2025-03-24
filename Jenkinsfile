@@ -31,12 +31,7 @@ pipeline {
         }
 
         
-        stage('Build Docker Image') {
-            steps {
-                // Build the Docker image
-                sh "docker build -t ${REPO_URL} ."
-            }
-        }
+        
 
         stage('Login to AWS ECR') {
             steps {
@@ -46,12 +41,15 @@ pipeline {
             }
         }
 
-        stage('Push Docker Image to ECR') {
-            steps {
-                // Push the Docker image to AWS ECR
-                sh "docker push ${REPO_URL}"
-            }
+        stage('Build & Push Docker Image') {
+    steps {
+        script {
+            sh 'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 231552173810.dkr.ecr.us-east-1.amazonaws.com'
+            sh 'docker build -t 231552173810.dkr.ecr.us-east-1.amazonaws.com/vanakkam-repo:latest .'
+            sh 'docker push 231552173810.dkr.ecr.us-east-1.amazonaws.com/vanakkam-repo:latest'
         }
+    }
+}
 
         stage('Deploy to EC2') {
             steps {
