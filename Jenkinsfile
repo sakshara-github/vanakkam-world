@@ -44,6 +44,12 @@ pipeline {
             }
         }
 
+        stage('Build Maven Project') {
+            steps {
+                sh 'mvn clean install'
+            }
+        }
+
         stage('Login to AWS ECR') {
             steps {
                 sh """
@@ -78,7 +84,7 @@ pipeline {
                             docker stop ${CONTAINER_NAME} || true &&
                             docker rm ${CONTAINER_NAME} || true &&
                             
-                            docker run -d --name ${CONTAINER_NAME} -p 91:8080 ${REPO_URL}
+                            docker run -d --name ${CONTAINER_NAME} -p 92:8080 ${REPO_URL}
                         '"
                     """
                 }
