@@ -14,31 +14,31 @@ pipeline {
         EC2_HOST = 'ec2-34-236-152-71.compute-1.amazonaws.com'
         CONTAINER_NAME = "vanakkam-container"
         GIT_CREDENTIALS_ID = 'git-token'
-        DOCKERFILE_CHANGED = ''
     }
 
     stages {
         stage('Checkout') {
             steps {
-                checkout([
-                    $class: 'GitSCM',
+                checkout([$class: 'GitSCM',
                     branches: [[name: '*/master']],
                     userRemoteConfigs: [[
                         url: 'https://github.com/sakshara-github/vanakkam-world.git',
                         credentialsId: GIT_CREDENTIALS_ID
-                    ]]]
-                )
+                    ]]
+                ])
             }
         }
 
         stage('Check for Dockerfile Changes') {
             steps {
                 script {
-                    DOCKERFILE_CHANGED = sh(script: "git diff --name-only HEAD~1 | grep 'Dockerfile' || echo ''", returnStdout: true).trim()
-                    if (DOCKERFILE_CHANGED) {
+                    def dockerfileChanged = sh(script: "git diff --name-only HEAD~1 | grep 'Dockerfile' || echo ''", returnStdout: true).trim()
+                    if (dockerfileChanged) {
                         echo "Dockerfile changed! Image will be rebuilt."
+                        env.DOCKERFILE_CHANGED = "true"
                     } else {
                         echo "No changes in Dockerfile. Skipping image build."
+                        env.DOCKERFILE_CHANGED = "false"
                     }
                 }
             }
@@ -46,7 +46,10 @@ pipeline {
 
         stage('Build Maven Project') {
             steps {
-                sh 'mvn clean install'
+                script {
+                    def mvnHome = tool name: 'Maven', type: 'maven'
+                    sh "${mvnHome}/bin/mvn clean install"
+                }
             }
         }
 
@@ -61,7 +64,7 @@ pipeline {
 
         stage('Build and Push Docker Image') {
             when {
-                expression { DOCKERFILE_CHANGED }
+                expression { env.DOCKERFILE_CHANGED == "true" }
             }
             steps {
                 sh """
@@ -84,7 +87,7 @@ pipeline {
                             docker stop ${CONTAINER_NAME} || true &&
                             docker rm ${CONTAINER_NAME} || true &&
                             
-                            docker run -d --name ${CONTAINER_NAME} -p 92:8080 ${REPO_URL}
+                            docker run -d --name ${CONTAINER_NAME} -p 91:8080 ${REPO_URL}
                         '"
                     """
                 }
