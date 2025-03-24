@@ -39,18 +39,7 @@ pipeline {
             }
         }
 
-        stage('Build & Push Docker Image') {
-            steps {
-                script {
-                    sh """
-                       
-                        docker build -t ${REPO_URL} .
-                        docker push ${REPO_URL}
-                    """
-                }
-            }
-        }
-
+        
         stage('Deploy to EC2') {
             steps {
                 sshagent(['ec2-ssh-credentials-updated']) {
