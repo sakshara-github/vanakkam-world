@@ -15,10 +15,11 @@ pipeline {
         CONTAINER_NAME = "vanakkam-container"
         GIT_CREDENTIALS_ID = 'git-token' 
     }
-     stages {
+
+    stages {
         stage('Checkout') {
             steps {
-                     checkout([
+                checkout([
                     $class: 'GitSCM',
                     branches: [[name: '*/master']],
                     userRemoteConfigs: [[
@@ -29,7 +30,6 @@ pipeline {
             }
         }
 
-    stages {
         stage('Login to AWS ECR') {
             steps {
                 sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
