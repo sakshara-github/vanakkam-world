@@ -14,6 +14,7 @@ pipeline {
         EC2_HOST = 'ec2-34-236-152-71.compute-1.amazonaws.com'
         CONTAINER_NAME = "vanakkam-container"
         GIT_CREDENTIALS_ID = 'git-token'
+        DOCKERFILE_CHANGED = ''
     }
 
     stages {
@@ -25,8 +26,21 @@ pipeline {
                     userRemoteConfigs: [[
                         url: 'https://github.com/sakshara-github/vanakkam-world.git',
                         credentialsId: GIT_CREDENTIALS_ID
-                    ]]
-                ])
+                    ]]]
+                )
+            }
+        }
+
+        stage('Check for Dockerfile Changes') {
+            steps {
+                script {
+                    DOCKERFILE_CHANGED = sh(script: "git diff --name-only HEAD~1 | grep 'Dockerfile' || echo ''", returnStdout: true).trim()
+                    if (DOCKERFILE_CHANGED) {
+                        echo "Dockerfile changed! Image will be rebuilt."
+                    } else {
+                        echo "No changes in Dockerfile. Skipping image build."
+                    }
+                }
             }
         }
 
@@ -35,14 +49,22 @@ pipeline {
                 sh """
                     aws ecr get-login-password --region ${AWS_REGION} | \
                     docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-                    docker build --no-cache -t 231552173810.dkr.ecr.us-east-1.amazonaws.com/vanakkam-repo:latest .
-                    docker push 231552173810.dkr.ecr.us-east-1.amazonaws.com/vanakkam-repo:latest
-
                 """
             }
         }
 
-        
+        stage('Build and Push Docker Image') {
+            when {
+                expression { DOCKERFILE_CHANGED }
+            }
+            steps {
+                sh """
+                    docker build -t ${REPO_URL} .
+                    docker push ${REPO_URL}
+                """
+            }
+        }
+
         stage('Deploy to EC2') {
             steps {
                 sshagent(['ec2-ssh-credentials-updated']) {
@@ -50,10 +72,13 @@ pipeline {
                         ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "bash -c '
                             aws ecr get-login-password --region ${AWS_REGION} | \
                             docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com &&
+                            
+                            docker pull ${REPO_URL} &&
+                            
                             docker stop ${CONTAINER_NAME} || true &&
                             docker rm ${CONTAINER_NAME} || true &&
-                            docker pull ${REPO_URL} &&
-                            docker run -d --name ${CONTAINER_NAME} -p 90:8080 ${REPO_URL}
+                            
+                            docker run -d --name ${CONTAINER_NAME} -p 91:8080 ${REPO_URL}
                         '"
                     """
                 }
