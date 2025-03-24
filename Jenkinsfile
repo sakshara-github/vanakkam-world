@@ -29,12 +29,32 @@ pipeline {
                 ])
             }
         }
+         stage('Build with Maven') {
+            steps {
+                // Use Maven to build the project
+                sh 'mvn clean install'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                // Build the Docker image
+                sh "docker build -t ${REPO_URL} ."
+            }
+        }
+
 
         stage('Login to AWS ECR') {
             steps {
                 sh """
                     aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
                 """
+            }
+        }
+        stage('Push Docker Image to ECR') {
+            steps {
+                // Push the Docker image to AWS ECR
+                sh "docker push ${REPO_URL}"
             }
         }
 
