@@ -12,7 +12,7 @@ pipeline {
         SSH_KEY = credentials('ec2-ssh-credentials-updated')
         EC2_USER = 'ubuntu'
         EC2_HOST = 'ec2-34-236-152-71.compute-1.amazonaws.com'
-        CONTAINER_NAME = "vanakkam-conatiner"
+        CONTAINER_NAME = "vanakkam-container"
         GIT_CREDENTIALS_ID = 'git-token' 
     }
 
@@ -32,7 +32,9 @@ pipeline {
 
         stage('Login to AWS ECR') {
             steps {
-                sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+                sh """
+                    aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+                """
             }
         }
 
@@ -40,20 +42,13 @@ pipeline {
             steps {
                 sshagent(['ec2-ssh-credentials-updated']) {
                     sh """
-                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} << EOF
-                            # Log in to ECR
-                            aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-                            
-                            # Stop and remove existing container if running
-                            docker stop ${CONTAINER_NAME} || true
-                            docker rm ${CONTAINER_NAME} || true
-                            
-                            # Pull latest image from ECR
-                            docker pull ${REPO_URL}
-                            
-                            # Run the container
+                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "bash -c '
+                            aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com &&
+                            docker stop ${CONTAINER_NAME} || true &&
+                            docker rm ${CONTAINER_NAME} || true &&
+                            docker pull ${REPO_URL} &&
                             docker run -d --name ${CONTAINER_NAME} -p 85:8080 ${REPO_URL}
-                        EOF
+                        '"
                     """
                 }
             }
