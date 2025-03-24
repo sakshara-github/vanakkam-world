@@ -12,7 +12,7 @@ pipeline {
         SSH_KEY = credentials('ec2-ssh-credentials-updated')
         EC2_USER = 'ubuntu'
         EC2_HOST = 'ec2-34-236-152-71.compute-1.amazonaws.com'
-        CONTAINER_NAME = "vanakkam-conatiner"
+        CONTAINER_NAME = "vanakkam-container"
         GIT_CREDENTIALS_ID = 'git-token' 
     }
 
@@ -29,7 +29,8 @@ pipeline {
                 ])
             }
         }
-         stage('Build with Maven') {
+
+        stage('Build with Maven') {
             steps {
                 // Use Maven to build the project
                 sh 'mvn clean install'
@@ -43,7 +44,6 @@ pipeline {
             }
         }
 
-
         stage('Login to AWS ECR') {
             steps {
                 sh """
@@ -51,6 +51,7 @@ pipeline {
                 """
             }
         }
+
         stage('Push Docker Image to ECR') {
             steps {
                 // Push the Docker image to AWS ECR
