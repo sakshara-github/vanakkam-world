@@ -13,7 +13,7 @@ pipeline {
         GIT_REPO = 'https://github.com/cubensquare/fms-wex'
         SSH_KEY = credentials('ec2-ssh-credentials-updated')
         EC2_USER = 'ubuntu'
-        EC2_HOST = 'ec2-54-234-143-197.compute-1.amazonaws.com'
+        EC2_HOST = 'ec2-34-203-198-246.compute-1.amazonaws.com'
         GIT_CREDENTIALS_ID = 'git-token' // ID of the stored credentials in Jenkins
         CONTAINER_NAME = "vanakkam-container"
     }
