@@ -2,20 +2,20 @@ pipeline {
     agent any
 
     environment {
-        AWS_ACCOUNT_ID = ''
+        AWS_ACCOUNT_ID = '231552173810'
         AWS_REGION = 'us-east-1'
         AWS_ACCESS_KEY_ID = credentials('AWS_Jenkins_Credentials')
         AWS_SECRET_ACCESS_KEY = credentials('AWS_Jenkins_Credentials')
-        ECR_REPO_NAME = ''
-        IMAGE_TAG = ''
+        ECR_REPO_NAME = 'vanakkam-repo'
+        IMAGE_TAG = 'latest'
         REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}"
-        GIT_BRANCH = ''
+        GIT_BRANCH = 'master'
         GIT_REPO = ''
         SSH_KEY = credentials('ec2-ssh-credentials-updated')
-        EC2_USER = 'ec2-user'
+        EC2_USER = 'ubuntu'
         EC2_HOST = 'ec2-54-234-143-197.compute-1.amazonaws.com'
         GIT_CREDENTIALS_ID = 'git-token'
-        CONTAINER_NAME = ""
+        CONTAINER_NAME = "vanakkam-container"
     }
 
     stages {
