@@ -25,7 +25,7 @@ pipeline {
                     $class: 'GitSCM',
                     branches: [[name: '*/']],
                     userRemoteConfigs: [[
-                        url: 'https://github.com/cubensquare/fms-wex.git',
+                        url: 'https://github.com/sakshara-github/vanakkam-world.git',
                         credentialsId: GIT_CREDENTIALS_ID
                     ]]
                 ])
