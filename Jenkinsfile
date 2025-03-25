@@ -2,52 +2,84 @@ pipeline {
     agent any
 
     environment {
-        AWS_ACCOUNT_ID = '231552173810'
+        AWS_ACCOUNT_ID = ''
         AWS_REGION = 'us-east-1'
-        ECR_REPO_NAME = 'vanakkam-repo'
-        IMAGE_TAG = 'latest'
+        AWS_ACCESS_KEY_ID = credentials('AWS_Jenkins_Credentials')
+        AWS_SECRET_ACCESS_KEY = credentials('AWS_Jenkins_Credentials')
+        ECR_REPO_NAME = ''
+        IMAGE_TAG = ''
         REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}"
-        GIT_CREDENTIALS_ID = 'git-token'
-        EC2_USER = 'ubuntu'
-        EC2_HOST = 'ec2-34-203-198-246.compute-1.amazonaws.com'
+        GIT_BRANCH = ''
+        GIT_REPO = ''
         SSH_KEY = credentials('ec2-ssh-credentials-updated')
-    }
-
-    tools {
-        maven 'maven' // Ensure Maven is set up in Jenkins
+        EC2_USER = 'ec2-user'
+        EC2_HOST = 'ec2-54-234-143-197.compute-1.amazonaws.com'
+        GIT_CREDENTIALS_ID = 'git-token'
+        CONTAINER_NAME = ""
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'master', credentialsId: GIT_CREDENTIALS_ID, url: 'https://github.com/sakshara-github/vanakkam-world.git'
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: "*/${GIT_BRANCH}"]],
+                    userRemoteConfigs: [[
+                        url: GIT_REPO,
+                        credentialsId: GIT_CREDENTIALS_ID
+                    ]]
+                ])
             }
         }
 
-        stage('Build with Maven') {
+        stage('Check for Dockerfile Changes') {
             steps {
-                sh 'mvn clean install'
+                script {
+                    def changedFiles = sh(
+                        script: "git diff --name-only HEAD~1 HEAD",
+                        returnStdout: true
+                    ).trim()
+
+                    if (!changedFiles.contains("Dockerfile") && !changedFiles.contains(".dockerignore")) {
+                        echo "No changes in Dockerfile. Skipping build and push."
+                        currentBuild.result = 'SUCCESS'
+                        exit 0
+                    } else {
+                        echo "Changes detected in Dockerfile. Proceeding with build."
+                    }
+                }
             }
         }
 
-        stage('Build and Push Docker Image') {
+        stage('Build Docker Image') {
             steps {
-                sh """
-                    docker build -t ${REPO_URL} .
-                    aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-                    docker push ${REPO_URL}
-                """
+                sh "docker build -t ${REPO_URL} ."
+            }
+        }
+
+        stage('Login to AWS ECR') {
+            steps {
+                sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+            }
+        }
+
+        stage('Push Docker Image to ECR') {
+            steps {
+                sh "docker push ${REPO_URL}"
             }
         }
 
         stage('Deploy to EC2') {
             steps {
                 sshagent(['ec2-ssh-credentials-updated']) {
-                    sh "ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} 'aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com'"
-                    sh "ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} 'docker stop vanakkam-container || true'"
-                    sh "ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} 'docker rm vanakkam-container || true'"
-                    sh "ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} 'docker pull ${REPO_URL}'"
-                    sh "ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} 'docker run -d --name vanakkam-container -p 92:8080 ${REPO_URL}'"
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} \
+                        "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com && \
+                        docker stop ${CONTAINER_NAME} || true && \
+                        docker rm ${CONTAINER_NAME} || true && \
+                        docker pull ${REPO_URL} && \
+                        docker run -d --name ${CONTAINER_NAME} --restart always -p 92:8082 ${REPO_URL}"
+                    """
                 }
             }
         }
