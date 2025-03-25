@@ -19,6 +19,10 @@ pipeline {
                 git branch: 'master', credentialsId: GIT_CREDENTIALS_ID, url: 'https://github.com/sakshara-github/vanakkam-world.git'
             }
         }
+        tools {
+    maven 'maven' // Use the name you set in Jenkins
+   }
+
 
         stage('Build with Maven') {
             steps {
