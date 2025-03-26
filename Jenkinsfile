@@ -9,23 +9,20 @@ pipeline {
         ECR_REPO_NAME = 'vanakkam-repo'
         IMAGE_TAG = 'latest'
         REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}"
-        GIT_BRANCH = 'master'
-        GIT_REPO = 'https://github.com/sakshara-github/vanakkam-world.git'
         SSH_KEY = credentials('ec2-ssh-credentials-updated')
         EC2_USER = 'ubuntu'
         EC2_HOST = 'ec2-34-203-198-246.compute-1.amazonaws.com'
-        GIT_CREDENTIALS_ID = 'git-token'
         CONTAINER_NAME = "vanakkam-container"
+        GIT_CREDENTIALS_ID = 'git-token'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: "*/${GIT_BRANCH}"]],
+                checkout([$class: 'GitSCM',
+                    branches: [[name: '*/master']],
                     userRemoteConfigs: [[
-                        url: GIT_REPO,
+                        url: 'https://github.com/sakshara-github/vanakkam-world.git',
                         credentialsId: GIT_CREDENTIALS_ID
                     ]]
                 ])
@@ -35,37 +32,45 @@ pipeline {
         stage('Check for Dockerfile Changes') {
             steps {
                 script {
-                    def changedFiles = sh(
-                        script: "git diff --name-only HEAD~1 HEAD",
-                        returnStdout: true
-                    ).trim()
-
-                    if (!changedFiles.contains("Dockerfile") && !changedFiles.contains(".dockerignore")) {
-                        echo "No changes in Dockerfile. Skipping build and push."
-                        currentBuild.result = 'SUCCESS'
-                        exit 0
+                    def dockerfileChanged = sh(script: "git diff --name-only HEAD~1 | grep 'Dockerfile' || echo ''", returnStdout: true).trim()
+                    if (dockerfileChanged) {
+                        echo "Dockerfile changed! Image will be rebuilt."
+                        env.DOCKERFILE_CHANGED = "true"
                     } else {
-                        echo "Changes detected in Dockerfile. Proceeding with build."
+                        echo "No changes in Dockerfile. Skipping image build."
+                        env.DOCKERFILE_CHANGED = "false"
                     }
                 }
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build Maven Project') {
             steps {
-                sh "docker build -t ${REPO_URL} ."
+                script {
+                    def mvnHome = tool name: 'maven', type: 'maven'
+                    sh "${mvnHome}/bin/mvn clean install"
+                }
             }
         }
 
         stage('Login to AWS ECR') {
             steps {
-                sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+                sh """
+                    aws ecr get-login-password --region ${AWS_REGION} | \
+                    docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+                """
             }
         }
 
-        stage('Push Docker Image to ECR') {
+        stage('Build and Push Docker Image') {
+            when {
+                expression { env.DOCKERFILE_CHANGED == "true" }
+            }
             steps {
-                sh "docker push ${REPO_URL}"
+                sh """
+                    docker build -t ${REPO_URL} .
+                    docker push ${REPO_URL}
+                """
             }
         }
 
@@ -73,12 +78,17 @@ pipeline {
             steps {
                 sshagent(['ec2-ssh-credentials-updated']) {
                     sh """
-                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} \
-                        "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com && \
-                        docker stop ${CONTAINER_NAME} || true && \
-                        docker rm ${CONTAINER_NAME} || true && \
-                        docker pull ${REPO_URL} && \
-                        docker run -d --name ${CONTAINER_NAME} --restart always -p 92:8082 ${REPO_URL}"
+                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "bash -c '
+                            aws ecr get-login-password --region ${AWS_REGION} | \
+                            docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com &&
+                            
+                            docker pull ${REPO_URL} &&
+                            
+                            docker stop ${CONTAINER_NAME} || true &&
+                            docker rm ${CONTAINER_NAME} || true &&
+                            
+                            docker run -d --name ${CONTAINER_NAME} -p 92:8080 ${REPO_URL} 
+                        '"
                     """
                 }
             }
