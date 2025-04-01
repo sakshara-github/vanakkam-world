@@ -11,7 +11,7 @@ pipeline {
         REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}"
         SSH_KEY = credentials('ec2-ssh-credentials-updated')
         EC2_USER = 'ubuntu'
-        EC2_HOST = 'ec2-34-203-198-246.compute-1.amazonaws.com'
+        EC2_HOST = 'ec2-54-89-107-210.compute-1.amazonaws.com'
         CONTAINER_NAME = "vanakkam-container"
         GIT_CREDENTIALS_ID = 'git-token'
     }
@@ -29,16 +29,17 @@ pipeline {
             }
         }
 
-        stage('Check for Dockerfile Changes') {
+        stage('Check for Relevant Changes') {
             steps {
                 script {
-                    def dockerfileChanged = sh(script: "git diff --name-only HEAD~1 | grep 'Dockerfile' || echo ''", returnStdout: true).trim()
-                    if (dockerfileChanged) {
-                        echo "Dockerfile changed! Image will be rebuilt."
-                        env.DOCKERFILE_CHANGED = "true"
+                    def changedFiles = sh(script: "git diff --name-only HEAD~1 | grep -E '(Dockerfile|index.html)' || echo ''", returnStdout: true).trim()
+                    
+                    if (changedFiles) {
+                        echo "Changes detected in: ${changedFiles}. Image will be rebuilt."
+                        env.BUILD_IMAGE = "true"
                     } else {
-                        echo "No changes in Dockerfile. Skipping image build."
-                        env.DOCKERFILE_CHANGED = "false"
+                        echo "No relevant changes detected. Skipping image build."
+                        env.BUILD_IMAGE = "false"
                     }
                 }
             }
@@ -64,7 +65,7 @@ pipeline {
 
         stage('Build and Push Docker Image') {
             when {
-                expression { env.DOCKERFILE_CHANGED == "true" }
+                expression { env.BUILD_IMAGE == "true" }
             }
             steps {
                 sh """
@@ -87,7 +88,7 @@ pipeline {
                             docker stop ${CONTAINER_NAME} || true &&
                             docker rm ${CONTAINER_NAME} || true &&
                             
-                            docker run -d --name ${CONTAINER_NAME} -p 92:8080 ${REPO_URL} 
+                            docker run -d --name ${CONTAINER_NAME} --restart always -p 92:8080 ${REPO_URL}
                         '"
                     """
                 }
