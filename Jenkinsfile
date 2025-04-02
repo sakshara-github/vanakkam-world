@@ -11,7 +11,7 @@ pipeline {
         REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}"
         SSH_KEY = credentials('ec2-ssh-credentials-updated')
         EC2_USER = 'ubuntu'
-        EC2_HOST = 'ec2-54-88-95-224.compute-1.amazonaws.com'
+        EC2_HOST = 'ec2-54-86-249-160.compute-1.amazonaws.com'
         CONTAINER_NAME = "vanakkam-container"
         GIT_CREDENTIALS_ID = 'git-token'
     }
