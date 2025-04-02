@@ -90,7 +90,7 @@ pipeline {
                             docker stop ${CONTAINER_NAME} || true &&
                             docker rm ${CONTAINER_NAME} || true &&
                             
-                            docker run -d --name ${CONTAINER_NAME} --restart always -p 92:8080 ${REPO_URL}
+                            docker run -d --name ${CONTAINER_NAME} --restart always -p 93:8080 ${REPO_URL}
                         '"
                     """
                 }
