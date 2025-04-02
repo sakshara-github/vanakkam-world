@@ -29,7 +29,7 @@ pipeline {
             }
         }
 
-        sstage('Check for Relevant Changes') {
+        stage('Check for Relevant Changes') {
     steps {
         script {
             def changedFiles = sh(script: "git diff --name-only HEAD~1 | grep -E '(Dockerfile|index.html)' || echo ''", returnStdout: true).trim()
