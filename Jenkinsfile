@@ -29,16 +29,16 @@ pipeline {
             }
         }
 
-        stage('Check for Relevant Changes') {
+        sstage('Check for Relevant Changes') {
     steps {
         script {
             def changedFiles = sh(script: "git diff --name-only HEAD~1 | grep -E '(Dockerfile|index.html)' || echo ''", returnStdout: true).trim()
-            
+            env.IMAGE_TAG = "latest"  // Use 'latest' instead of dynamically generated tag
+            env.REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${env.IMAGE_TAG}"
+
             if (changedFiles) {
                 echo "Changes detected in: ${changedFiles}. Image will be rebuilt."
                 env.BUILD_IMAGE = "true"
-                env.IMAGE_TAG = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
-                env.REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${env.IMAGE_TAG}"
             } else {
                 echo "No relevant changes detected. Skipping image build."
                 env.BUILD_IMAGE = "false"
@@ -46,6 +46,7 @@ pipeline {
         }
     }
 }
+
 
         stage('Build Maven Project') {
             steps {
