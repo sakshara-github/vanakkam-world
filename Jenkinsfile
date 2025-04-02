@@ -33,12 +33,12 @@ pipeline {
     steps {
         script {
             def changedFiles = sh(script: "git diff --name-only HEAD~1 | grep -E '(Dockerfile|index.html)' || echo ''", returnStdout: true).trim()
-
+            
             if (changedFiles) {
                 echo "Changes detected in: ${changedFiles}. Image will be rebuilt."
                 env.BUILD_IMAGE = "true"
                 env.IMAGE_TAG = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
-                env.REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}"
+                env.REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${env.IMAGE_TAG}"
             } else {
                 echo "No relevant changes detected. Skipping image build."
                 env.BUILD_IMAGE = "false"
@@ -88,7 +88,7 @@ pipeline {
                             docker pull ${REPO_URL} &&
                             
                             docker stop ${CONTAINER_NAME} || true &&
-                            docker rm ${CONTAINER_NAME} || true &&
+                            docker rm -f ${CONTAINER_NAME} || true &&
                             
                             docker run -d --name ${CONTAINER_NAME} --restart always -p 93:8080 ${REPO_URL}
                         '"
