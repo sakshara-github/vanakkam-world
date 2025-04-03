@@ -1,4 +1,3 @@
-
 pipeline {
     agent any
 
@@ -18,26 +17,30 @@ pipeline {
     stages {
         stage('Clean Workspace') {
             steps {
-                cleanWs()  // Deletes old files before new build
+                cleanWs()  // Remove all old files to prevent cache issues
             }
         }
 
-        stage('Checkout') {
-            steps {
-                checkout([$class: 'GitSCM',
-                    branches: [[name: '*/master']],
-                    userRemoteConfigs: [[
-                        url: 'https://github.com/sakshara-github/vanakkam-world.git',
-                        credentialsId: GIT_CREDENTIALS_ID
-                    ]]])
-                sh "git pull origin master"  // Ensures latest code is pulled
-            }
-        }
-
-        stage('Check for Relevant Changes') {
+        stage('Checkout Latest Code') {
             steps {
                 script {
-                    def changedFiles = sh(script: "git diff --name-only HEAD~1 HEAD | grep -E '(Dockerfile|index.html|src/)' || echo ''", returnStdout: true).trim()
+                    checkout([$class: 'GitSCM',
+                        branches: [[name: '*/master']],
+                        userRemoteConfigs: [[
+                            url: 'https://github.com/sakshara-github/vanakkam-world.git',
+                            credentialsId: GIT_CREDENTIALS_ID
+                        ]]])
+                    sh "git reset --hard origin/master"  // Ensures we are on the latest commit
+                    sh "git fetch --all"
+                    sh "git pull origin master"  // Force update to latest code
+                }
+            }
+        }
+
+        stage('Check for Changes') {
+            steps {
+                script {
+                    def changedFiles = sh(script: "git diff --name-only HEAD~1 HEAD", returnStdout: true).trim()
                     env.IMAGE_TAG = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
                     env.REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${env.IMAGE_TAG}"
 
@@ -45,42 +48,35 @@ pipeline {
                         echo "Changes detected in: ${changedFiles}. Image will be rebuilt."
                         env.BUILD_IMAGE = "true"
                     } else {
-                        echo "No relevant changes detected. Skipping image build."
+                        echo "No changes detected. Skipping build."
                         env.BUILD_IMAGE = "false"
                     }
                 }
             }
         }
 
-        stage('Build Maven Project') {
+        stage('Force Build & Push Docker Image') {
             when {
                 expression { env.BUILD_IMAGE == "true" }
             }
             steps {
-                script {
-                    def mvnHome = tool name: 'maven', type: 'maven'
-                    sh "${mvnHome}/bin/mvn clean install"
-                }
-            }
-        }
-
-        stage('Login to AWS ECR') {
-            steps {
                 sh """
-                    aws ecr get-login-password --region ${AWS_REGION} | \
-                    docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+                    echo "Building Docker Image: ${REPO_URL}"
+                    docker build --no-cache -t ${REPO_URL} .
+                    docker push ${REPO_URL}
+                    echo "Successfully pushed image: ${REPO_URL}"
                 """
             }
         }
 
-        stage('Build and Push Docker Image') {
+        stage('Verify Image on ECR') {
             when {
                 expression { env.BUILD_IMAGE == "true" }
             }
             steps {
                 sh """
-                    docker build --no-cache -t ${REPO_URL} .  // Forces a new build
-                    docker push ${REPO_URL}
+                    echo "Checking if image exists in ECR..."
+                    aws ecr list-images --repository-name ${ECR_REPO_NAME} --region ${AWS_REGION}
                 """
             }
         }
@@ -93,15 +89,26 @@ pipeline {
                 sshagent(['ec2-ssh-credentials-updated']) {
                     sh """
                         ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "bash -c '
+                            echo "Logging in to ECR..."
                             aws ecr get-login-password --region ${AWS_REGION} | \
-                            docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com &&
+                            docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
                             
-                            docker stop ${CONTAINER_NAME} || true &&
-                            docker rm -f ${CONTAINER_NAME} || true &&
+                            echo "Stopping old container..."
+                            docker stop ${CONTAINER_NAME} || true
                             
-                            docker pull ${REPO_URL} &&
+                            echo "Removing old container..."
+                            docker rm -f ${CONTAINER_NAME} || true
                             
-                            docker run -d --name ${CONTAINER_NAME} --restart always -p 93:8080 ${REPO_URL}
+                            echo "Removing old Docker image..."
+                            docker rmi ${REPO_URL} || true
+                            
+                            echo "Pulling new image..."
+                            docker pull ${REPO_URL}
+                            
+                            echo "Running new container..."
+                            docker run -d --name ${CONTAINER_NAME} --restart always -p 94:8080 ${REPO_URL}
+                            
+                            echo "Deployment complete."
                         '"
                     """
                 }
