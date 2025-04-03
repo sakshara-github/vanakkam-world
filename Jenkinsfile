@@ -9,7 +9,7 @@ pipeline {
         ECR_REPO_NAME = 'vanakkam-repo'
         SSH_KEY = credentials('ec2-ssh-credentials-updated')
         EC2_USER = 'ubuntu'
-        EC2_HOST = 'ec2-54-86-249-160.compute-1.amazonaws.com'
+        EC2_HOST = 'ec2-54-242-160-90.compute-1.amazonaws.com'
         CONTAINER_NAME = "vanakkam-container"
         GIT_CREDENTIALS_ID = 'git-token'
     }
