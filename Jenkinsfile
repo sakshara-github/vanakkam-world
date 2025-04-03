@@ -1,3 +1,4 @@
+
 pipeline {
     agent any
 
@@ -15,6 +16,12 @@ pipeline {
     }
 
     stages {
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()  // Deletes old files before new build
+            }
+        }
+
         stage('Checkout') {
             steps {
                 checkout([$class: 'GitSCM',
@@ -23,15 +30,15 @@ pipeline {
                         url: 'https://github.com/sakshara-github/vanakkam-world.git',
                         credentialsId: GIT_CREDENTIALS_ID
                     ]]])
-                sh "git fetch --all"
+                sh "git pull origin master"  // Ensures latest code is pulled
             }
         }
 
         stage('Check for Relevant Changes') {
             steps {
                 script {
-                    def changedFiles = sh(script: "git diff --name-only HEAD~1 | grep -E '(Dockerfile|index.html|src/)' || echo ''", returnStdout: true).trim()
-                    env.IMAGE_TAG = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()  // Unique tag from commit hash
+                    def changedFiles = sh(script: "git diff --name-only HEAD~1 HEAD | grep -E '(Dockerfile|index.html|src/)' || echo ''", returnStdout: true).trim()
+                    env.IMAGE_TAG = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
                     env.REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${env.IMAGE_TAG}"
 
                     if (changedFiles) {
@@ -72,7 +79,7 @@ pipeline {
             }
             steps {
                 sh """
-                    docker build --no-cache -t ${REPO_URL} .
+                    docker build --no-cache -t ${REPO_URL} .  // Forces a new build
                     docker push ${REPO_URL}
                 """
             }
