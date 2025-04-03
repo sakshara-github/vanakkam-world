@@ -7,8 +7,6 @@ pipeline {
         AWS_ACCESS_KEY_ID = credentials('AWS_Jenkins_Credentials')
         AWS_SECRET_ACCESS_KEY = credentials('AWS_Jenkins_Credentials')
         ECR_REPO_NAME = 'vanakkam-repo'
-       
-        REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}"
         SSH_KEY = credentials('ec2-ssh-credentials-updated')
         EC2_USER = 'ubuntu'
         EC2_HOST = 'ec2-54-86-249-160.compute-1.amazonaws.com'
@@ -24,31 +22,32 @@ pipeline {
                     userRemoteConfigs: [[
                         url: 'https://github.com/sakshara-github/vanakkam-world.git',
                         credentialsId: GIT_CREDENTIALS_ID
-                    ]]
-                ])
+                    ]]])
             }
         }
 
         stage('Check for Relevant Changes') {
-    steps {
-        script {
-            def changedFiles = sh(script: "git diff --name-only HEAD~1 | grep -E '(Dockerfile|index.html)' || echo ''", returnStdout: true).trim()
-            env.IMAGE_TAG = "latest"  // Use 'latest' instead of dynamically generated tag
-            env.REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${env.IMAGE_TAG}"
+            steps {
+                script {
+                    def changedFiles = sh(script: "git diff --name-only HEAD~1 | grep -E '(Dockerfile|index.html|src/)' || echo ''", returnStdout: true).trim()
+                    env.IMAGE_TAG = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()  // Use commit hash as the tag
+                    env.REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${env.IMAGE_TAG}"
 
-            if (changedFiles) {
-                echo "Changes detected in: ${changedFiles}. Image will be rebuilt."
-                env.BUILD_IMAGE = "true"
-            } else {
-                echo "No relevant changes detected. Skipping image build."
-                env.BUILD_IMAGE = "false"
+                    if (changedFiles) {
+                        echo "Changes detected in: ${changedFiles}. Image will be rebuilt."
+                        env.BUILD_IMAGE = "true"
+                    } else {
+                        echo "No relevant changes detected. Skipping image build."
+                        env.BUILD_IMAGE = "false"
+                    }
+                }
             }
         }
-    }
-}
-
 
         stage('Build Maven Project') {
+            when {
+                expression { env.BUILD_IMAGE == "true" }
+            }
             steps {
                 script {
                     def mvnHome = tool name: 'maven', type: 'maven'
@@ -79,6 +78,9 @@ pipeline {
         }
 
         stage('Deploy to EC2') {
+            when {
+                expression { env.BUILD_IMAGE == "true" }
+            }
             steps {
                 sshagent(['ec2-ssh-credentials-updated']) {
                     sh """
@@ -91,7 +93,7 @@ pipeline {
                             docker stop ${CONTAINER_NAME} || true &&
                             docker rm -f ${CONTAINER_NAME} || true &&
                             
-                            docker run -d --name ${CONTAINER_NAME} --restart always -p 93:8080 ${REPO_URL}
+                            docker run -d --name ${CONTAINER_NAME} --restart always -p 94:8080 ${REPO_URL}
                         '"
                     """
                 }
