@@ -23,6 +23,7 @@ pipeline {
                         url: 'https://github.com/sakshara-github/vanakkam-world.git',
                         credentialsId: GIT_CREDENTIALS_ID
                     ]]])
+                sh "git fetch --all"  // Ensures we have the latest changes
             }
         }
 
@@ -30,7 +31,7 @@ pipeline {
             steps {
                 script {
                     def changedFiles = sh(script: "git diff --name-only HEAD~1 | grep -E '(Dockerfile|index.html|src/)' || echo ''", returnStdout: true).trim()
-                    env.IMAGE_TAG = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()  // Use commit hash as the tag
+                    env.IMAGE_TAG = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()  // Use commit hash as tag
                     env.REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${env.IMAGE_TAG}"
 
                     if (changedFiles) {
@@ -44,34 +45,13 @@ pipeline {
             }
         }
 
-        stage('Build Maven Project') {
-            when {
-                expression { env.BUILD_IMAGE == "true" }
-            }
-            steps {
-                script {
-                    def mvnHome = tool name: 'maven', type: 'maven'
-                    sh "${mvnHome}/bin/mvn clean install"
-                }
-            }
-        }
-
-        stage('Login to AWS ECR') {
-            steps {
-                sh """
-                    aws ecr get-login-password --region ${AWS_REGION} | \
-                    docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-                """
-            }
-        }
-
         stage('Build and Push Docker Image') {
             when {
                 expression { env.BUILD_IMAGE == "true" }
             }
             steps {
                 sh """
-                    docker build -t ${REPO_URL} .
+                    docker build --no-cache -t ${REPO_URL} .  // Forces rebuild
                     docker push ${REPO_URL}
                 """
             }
